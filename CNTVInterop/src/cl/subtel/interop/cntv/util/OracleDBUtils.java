@@ -1,0 +1,516 @@
+package cl.subtel.interop.cntv.util;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
+import cl.subtel.interop.cntv.calculotvd.ArregloAntena;
+import cl.subtel.interop.cntv.calculotvd.DatosElemento;
+import cl.subtel.interop.cntv.calculotvd.Elemento;
+
+public class OracleDBUtils {
+
+	private static final int ID_TRDL_PERDIDAS_LOBULO = 4;
+	private static final int ID_TRDL_ZONA_SERVICIO = 3;
+
+	public static Connection connect() {
+		System.out.println("-------- Oracle JDBC Connection Testing ------");
+
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+		} catch (ClassNotFoundException e) {
+			System.out.println("Where is your Oracle JDBC Driver?");
+			e.printStackTrace();
+		}
+
+		System.out.println("Oracle JDBC Driver Registered!");
+		Connection connection = null;
+
+		try {
+			String dbURL = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
+			connection = DriverManager.getConnection(dbURL);
+		} catch (SQLException e) {
+			System.out.println("Connection Failed! Check output console");
+			e.printStackTrace();
+		}
+
+		if (connection != null) {
+			System.out.println("You made it, take control your database now!");
+		} else {
+			System.out.println("Failed to make connection!");
+		}
+
+		return connection;
+	}
+
+	public static void closeAll(Connection connection, Statement stmt, ResultSet res) {
+
+		if (res != null) {
+			try {
+				res.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (stmt != null) {
+			try {
+				stmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (connection != null) {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void closeConnection(Connection connection) {
+
+		if (connection != null) {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void closeStatement(Statement stmt) {
+		if (stmt != null) {
+			try {
+				stmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void closeResultSet(ResultSet res) {
+		if (res != null) {
+			try {
+				res.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static Object getColumnCode(String cod_column_name, String table_name, String where_column_name,
+			String where_column_value) {
+		Connection connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+		Object cod_value = "";
+		try {
+			stmt = connection.prepareStatement(
+					"SELECT " + cod_column_name + " FROM " + table_name + " WHERE " + where_column_name + " = ?");
+			stmt.setString(1, where_column_value);
+
+			res = stmt.executeQuery();
+			if (res.next()) {
+				cod_value = res.getObject(cod_column_name);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		closeAll(connection, stmt, res);
+		return cod_value;
+	}
+
+	public static int getTelCodByTipoElemento(String tipo_elemento) {
+		int tel_cod = 0;
+
+		Connection connection_oracledb = null;
+		Statement stmt_query_get_tel_cod = null;
+		ResultSet result_tel_cod_query = null;
+		try {
+			connection_oracledb = connect();
+			stmt_query_get_tel_cod = connection_oracledb.createStatement();
+			result_tel_cod_query = stmt_query_get_tel_cod
+					.executeQuery("select TEL_CODIGO from TIPO_ELEMENTO where TEL_NOMBRE = \'" + tipo_elemento + "\'");
+
+			if (result_tel_cod_query.next()) {
+				tel_cod = result_tel_cod_query.getInt("TEL_CODIGO");
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		closeAll(connection_oracledb, stmt_query_get_tel_cod, result_tel_cod_query);
+		return tel_cod;
+	}
+
+	public static boolean insertElemento(Elemento elemento_to_insert, JSONObject datos_sist_principal,
+			boolean is_principal) throws SQLException {
+
+		System.out.println("----INSERTANDO ELEMENTO----");
+		boolean inserted_ok = false;
+		Connection connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet generatedKeys = null;
+		Long inserted_elm_codigo = 0L;
+		System.out.println(elemento_to_insert.getRut_cliente());
+		connection.setAutoCommit(false);
+		String insert_element = "INSERT INTO bdc_elementos(elm_codigo, elm_nombre, CLI_RUT_CLIENTE, COD_TIPO_SERVICIO, tel_codigo, tec_codigo, ELM_FECHA_INGRESO) values (SEQ_BDC_ELM.NEXTVAL, ?, ?, ?, ?, ?, SYSDATE)";
+		stmt = connection.prepareStatement(insert_element, new String[] { "elm_codigo" });
+		stmt.setString(1, elemento_to_insert.getElm_nombre());
+		stmt.setInt(2, elemento_to_insert.getRut_cliente());
+		stmt.setString(3, Elemento.getTipoServicio());
+		stmt.setInt(4, elemento_to_insert.getTel_codigo());
+		stmt.setInt(5, Elemento.TEC_CODIGO);
+		stmt.executeUpdate();
+
+		generatedKeys = stmt.getGeneratedKeys();
+		if (null != generatedKeys && generatedKeys.next()) {
+			inserted_elm_codigo = generatedKeys.getLong(1);
+			if (is_principal) {
+				DatosElemento elemento_datos = TvdUtils.createObjectElementoDatos(inserted_elm_codigo,
+						datos_sist_principal);
+				inserted_ok = OracleDBUtils.insertDatosElemento(datos_sist_principal, elemento_datos, connection);
+			} else {
+				inserted_ok = true;
+			}
+		}
+
+		if (inserted_ok) {
+			System.out.println("---DATOS GUARDADOS CORRECTAMENTE---");
+			connection.commit();
+		} else {
+			System.out.println("---ERROR GUARDANDO DATOS: NO SE GUARDARÁ NINGÚN CAMBIO---");
+			connection.rollback();
+		}
+
+		closeAll(connection, stmt, generatedKeys);
+		return inserted_ok;
+	}
+
+	public static boolean insertDatosElemento(JSONObject datos_sist_principal, DatosElemento elemento_datos,
+			Connection connection) {
+
+		System.out.println("----INSERTANDO DATOS ELEMENTO----");
+		boolean inserted_ok = false;
+		PreparedStatement stmt = null;
+		ResultSet generatedKeys = null;
+		Long inserted_elm_codigo = 0L;
+		try {
+			String insert_element = "insert into bdc_datos_elementos (DTE_CODIGO, elm_codigo, dte_direccion, cod_comuna, cod_localidad, latitud_calculada, longitud_calculada,latitud_wgs84, longitud_wgs84, banda, "
+					+ "polarizacion, tipoemision, POTENCIA, PUNTOTX, GANANCIA, ALTURAANTENA, TILT, PERDIDASCABLES,UBICACIONESTUDIOPRINCIPAL, UBICACIONESTUDIOALTERNATIVO, UBICACIONPLANTATRANSMISORA, "
+					+ "INTENSIDADCAMPO, PLAZOINICIOOBRAS, PLAZOTERMINOOBRAS, PLAZOINICIOSERVICIO,ACTIVIDADECONOMICA, CANTIDADELEMENTOS, UNIDADPOTENCIA, UNIDADGANANCIA, COD_REGION, PERDIDASDIVPOTENCIA, FRECUENCIA, "
+					+ "FECHA_CREACION, ESTADO_ELEMENTO,GANANCIA_HORIZONTAL, TCR_CODIGO, TIAN_COD, DTE_LATITUD_SUR_GR, DTE_LATITUD_SUR_MI,DTE_LATITUD_SUR_SG, DTE_LONGITUD_OESTE_GR, DTE_LONGITUD_OESTE_MI, "
+					+ "DTE_LONGITUD_OESTE_SG,OTRASPERDIDAS, DTE_MOVIMIENTO) VALUES (SEQ_BDC_DELM.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, SYSDATE,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+			stmt = connection.prepareStatement(insert_element, new String[] { "DTE_CODIGO" });
+			stmt.setLong(1, elemento_datos.getElm_codigo());
+			stmt.setString(2, elemento_datos.getDte_direccion());
+			stmt.setInt(3, elemento_datos.getCod_comuna());
+			stmt.setLong(4, elemento_datos.getCod_localidad());
+			stmt.setDouble(5, elemento_datos.getLatitud_calculada());
+			stmt.setDouble(6, elemento_datos.getLongitud_calculada());
+			stmt.setDouble(7, elemento_datos.getLatitud_WGS84());
+			stmt.setDouble(8, elemento_datos.getLongitud_WGS84());
+			stmt.setString(9, DatosElemento.getBanda());
+			stmt.setString(10, elemento_datos.getPolarizacion());
+			stmt.setString(11, elemento_datos.getTipo_emision());
+			stmt.setString(12, elemento_datos.getPotencia_max_tx());
+			stmt.setString(13, elemento_datos.getPunto_tx());
+			stmt.setString(14, elemento_datos.getGanancia());
+			stmt.setString(15, elemento_datos.getAltura_antena_TX());
+			stmt.setString(16, elemento_datos.getTilt());
+			stmt.setString(17, elemento_datos.getPerdidas_cable());
+			stmt.setString(18, elemento_datos.getUbicacion_estudio_principal());
+			stmt.setString(19, elemento_datos.getUbicacion_estudio_alternativo());
+			stmt.setString(20, elemento_datos.getUbicacion_planta_transmisora());
+			stmt.setString(21, elemento_datos.getIntensidad_campo());
+			stmt.setString(22, elemento_datos.getFecha_inicio());
+			stmt.setString(23, elemento_datos.getFecha_termino());
+			stmt.setString(24, elemento_datos.getInicio_servicio());
+			stmt.setString(25, DatosElemento.getActividadEconomica());
+			stmt.setString(26, elemento_datos.getCantidad_elementos());
+			stmt.setString(27, DatosElemento.getUnidadPotencia());
+			stmt.setString(28, DatosElemento.getUnidadGanancia());
+			stmt.setLong(29, elemento_datos.getCod_region());
+			stmt.setString(30, elemento_datos.getPerdidas_div_potencia());
+			stmt.setDouble(31, elemento_datos.getFrecuencia());
+			stmt.setString(32, DatosElemento.getEstadoElem());
+			stmt.setString(33, elemento_datos.getGanancia_horizontal());
+			stmt.setInt(34, DatosElemento.getTcrCodigo());
+			stmt.setString(35, elemento_datos.getTian_cod());
+			stmt.setInt(36, elemento_datos.getDte_latitud_sur_gr());
+			stmt.setInt(37, elemento_datos.getDte_latitud_sur_min());
+			stmt.setInt(38, elemento_datos.getDte_latitud_sur_sg());
+			stmt.setInt(39, elemento_datos.getDte_longitud_oeste_gr());
+			stmt.setInt(40, elemento_datos.getDte_longitud_oeste_min());
+			stmt.setInt(41, elemento_datos.getDte_longitud_oeste_sg());
+			stmt.setDouble(42, elemento_datos.getOtras_perdidas());
+			stmt.setString(43, DatosElemento.getDteMovimiento());
+			stmt.executeUpdate();
+
+			generatedKeys = stmt.getGeneratedKeys();
+			if (null != generatedKeys && generatedKeys.next()) {
+				inserted_elm_codigo = generatedKeys.getLong(1);
+				inserted_ok = insertarDatosDependientes(datos_sist_principal, elemento_datos.getElm_codigo(),
+						inserted_elm_codigo, connection);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return inserted_ok;
+	}
+
+	public static boolean insertarDatosDependientes(JSONObject datos_sist_principal, Long elem_codigo,
+			Long inserted_elm_data_codigo, Connection connection) {
+
+		boolean inserted_ok = false;
+		boolean inserted_perdidas_ok = insertDatosRadiales(datos_sist_principal, inserted_elm_data_codigo,
+				ID_TRDL_PERDIDAS_LOBULO, "perdidas", connection);
+		boolean inserted_dist_ok = insertDatosRadiales(datos_sist_principal, inserted_elm_data_codigo,
+				ID_TRDL_ZONA_SERVICIO, "zona", connection);
+		boolean inserted_arreglo_ok = insertArregloAntena(datos_sist_principal, elem_codigo, connection);
+
+		if (inserted_perdidas_ok && inserted_dist_ok && inserted_arreglo_ok) {
+			inserted_ok = true;
+		}
+
+		return inserted_ok;
+	}
+
+	/**
+	 * @param datos_sist_principal
+	 *            Corresponde a la información almacenada en Mongo de los
+	 *            calculos predictivos
+	 * @param datos_elemento_id
+	 *            ID relación con la tabla bdc_datos_elementos
+	 * @param id_tdl
+	 *            ID correspondiente al tipo de radial (Perd Lob: 4, Zona
+	 *            Servicio: 3)
+	 * @param variable_radial
+	 *            Nombre del radial que se va a guardar (perdidas: Perdidas
+	 *            Lóbulo, zona: Zona de Servicio)
+	 */
+	public static boolean insertDatosRadiales(JSONObject datos_sist_principal, Long datos_elemento_id, int id_tdl,
+			String variable_radial, Connection db_connection) {
+
+		System.out.println("----INSERTANDO DATOS RADIALES: " + variable_radial + "----");
+		JSONObject calculos = null;
+		boolean inserted_ok = false;
+
+		try {
+			Long id_derad = insertDatElemRadiales(datos_elemento_id, id_tdl, db_connection);
+			calculos = new JSONObject(datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
+			int radiales = Integer.parseInt(calculos.get("radiales").toString());
+
+			int idx_loop = 0;
+			int grados_secuencia = 360 / radiales;
+
+			PreparedStatement stmt = null;
+
+			stmt = db_connection.prepareStatement(
+					"INSERT INTO BDC_DATOS_RADIALES (ID_DRAD, ID_DERAD, DERAD_GRADO, DERAD_VALOR) VALUES (BDC_SUBTEL.SEQ_DRAD_ID.NEXTVAL, ?, ?, ?)");
+			String tipo_radial_texto = getRadialTexto(variable_radial, radiales);
+			while (idx_loop < radiales) {
+				int grados_texto = grados_secuencia * idx_loop;
+				String radial_texto = tipo_radial_texto + grados_texto;
+				double radial_valor = Double.parseDouble(calculos.get(radial_texto).toString());
+
+				stmt.setLong(1, id_derad);
+				stmt.setInt(2, grados_texto);
+				stmt.setDouble(3, radial_valor);
+
+				stmt.addBatch();
+				idx_loop++;
+			}
+			int cant_valores_insertados[] = stmt.executeBatch();
+			System.out.println("Datos insertados: " + cant_valores_insertados.length);
+			inserted_ok = true;
+			stmt.close();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return inserted_ok;
+	}
+
+	public static boolean insertArregloAntena(JSONObject datos_sist_principal, Long elm_codigo,
+			Connection db_connection) {
+		System.out.println("----INSERTANDO DATOS ARREGLO ANTENAS----");
+
+		boolean inserted_ok = false;
+		try {
+			JSONObject form_data = new JSONObject(
+					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""))
+							.getJSONObject("form_data");
+			JSONObject arreglo_antenas = form_data.getJSONObject("arreglos_antena");
+			JSONObject ganancia = arreglo_antenas.getJSONObject("ganancia");
+			JSONObject azimutV = arreglo_antenas.getJSONObject("azimutV");
+			JSONObject marca = arreglo_antenas.getJSONObject("marca");
+			JSONObject numero = arreglo_antenas.getJSONObject("numero");
+			JSONObject modelo = arreglo_antenas.getJSONObject("modelo");
+			JSONObject potencia = arreglo_antenas.getJSONObject("potencia");
+			JSONObject polarizacion = arreglo_antenas.getJSONObject("polarizacion");
+			JSONObject largo = arreglo_antenas.getJSONObject("largo");
+			JSONObject fase = arreglo_antenas.getJSONObject("fase");
+			JSONObject azimutA = arreglo_antenas.getJSONObject("azimutA");
+			JSONObject altura = arreglo_antenas.getJSONObject("altura");
+
+			int numero_elementos = Integer
+					.parseInt(form_data.getJSONObject("carac_tecnicas").get("num_elem").toString());
+
+			PreparedStatement stmt = db_connection.prepareStatement(
+					"INSERT INTO BDC_ARREGLO_ANTENA (ID_ARREGLO,ELEM_CODIGO, NUMERO_ARREGLO, ALTURA, UNIDAD_ALTURA, LARGO_VASTAGO, UNIDAD_LARGO_VASTAGO, "
+							+ "AZIMUT_VASTAGO, UNIDAD_AZIMUT_VASTAGO, AZIMUT_ANTENA, UNIDAD_AZIMUT_ANTENA, GANANCIA_ANTENA, UNIDAD_GANANCIA_ANTENA, POLARIZACION, MARCA, MODELO, FASE, UNIDAD_FASE, POTENCIA) VALUES"
+							+ "(BDC_SUBTEL.SEQ_BDC_AANTENA.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			int idx_loop = 0;
+			while (idx_loop < numero_elementos) {
+				stmt.setLong(1, elm_codigo);
+				stmt.setString(2, numero.get("ant_num" + idx_loop).toString());
+				stmt.setString(3, altura.get("ant_alt" + idx_loop).toString());
+				stmt.setInt(4, ArregloAntena.getUnidadAltura());
+				stmt.setString(5, largo.get("ant_lar" + idx_loop).toString());
+				stmt.setInt(6, ArregloAntena.getUnidadLargoVastago());
+				stmt.setString(7, azimutV.get("ant_aziV" + idx_loop).toString());
+				stmt.setInt(8, ArregloAntena.getUnidadAzimutVastago());
+				stmt.setString(9, azimutA.get("ant_aziA" + idx_loop).toString());
+				stmt.setInt(10, ArregloAntena.getUnidadAzimutAntena());
+				stmt.setString(11, ganancia.get("ant_gan" + idx_loop).toString());
+				stmt.setInt(12, ArregloAntena.getUnidadGananciaAntena());
+				stmt.setString(13, polarizacion.get("ant_pol" + idx_loop).toString());
+				stmt.setString(14, marca.get("ant_marc" + idx_loop).toString());
+				stmt.setString(15, modelo.get("ant_mod" + idx_loop).toString());
+				stmt.setString(16, fase.get("ant_fase" + idx_loop).toString());
+				stmt.setInt(17, ArregloAntena.getUnidadFase());
+				stmt.setString(18, potencia.get("ant_pot" + idx_loop).toString());
+
+				stmt.addBatch();
+				idx_loop++;
+			}
+
+			int arreglos_insertados[] = stmt.executeBatch();
+			System.out.println("Arreglos Insertados:" + arreglos_insertados.length);
+			inserted_ok = true;
+			stmt.close();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return inserted_ok;
+	}
+
+	public static Long insertDatElemRadiales(Long datos_elemento_id, int id_tdl, Connection db_connection) {
+		System.out.println("----INSERTANDO DATOS ELEMENTO RADIAL----");
+		Long id_derad = 0L;
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+
+		try {
+			stmt = db_connection.prepareStatement(
+					"INSERT INTO BDC_DAT_ELEM_RADIALES (ID_DERAD, DERAD_USUARIO_CREA, DERAD_FECHA_CREA, DTE_CODIGO, ID_TRDL) "
+							+ "VALUES (BDC_SUBTEL.SEQ_DE_RAD_ID.NEXTVAL, \'ADM\', SYSDATE, ?, ?)",
+					new String[] { "ID_DERAD" });
+			stmt.setLong(1, datos_elemento_id);
+			stmt.setInt(2, id_tdl);
+			stmt.executeUpdate();
+
+			res = stmt.getGeneratedKeys();
+			if (null != res && res.next()) {
+				id_derad = res.getLong(1);
+			}
+			res.close();
+			stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return id_derad;
+	}
+
+	public static int getTcrCodigo() {
+		int tcr_cod = 0;
+		tcr_cod = Integer.parseInt(
+				getColumnCode("TCR_CODIGO", "SGF_TIPO_COORDENADAS", "TCR_NOMBRE", DatosElemento.getDatum()).toString());
+		return tcr_cod;
+	}
+
+	public static String getTianCod(String tipo_antena) {
+		String tian_cod = getColumnCode("TIAN_COD", "BDC_TIPO_ANTENA", "TIAN_GLOSA", tipo_antena).toString();
+		return tian_cod;
+	}
+
+	public static String getPolarizacionCod(double polarizacion_perc_horizontal, double polarizacion_perc_vertical) {
+		String tipo_polarizacion = "";
+		String polarizacion_alias = "";
+
+		tipo_polarizacion = TvdUtils.getNamePolarizacionByType(polarizacion_perc_horizontal,
+				polarizacion_perc_vertical);
+		polarizacion_alias = getColumnCode("cod_polarizacion", "polarizacion", "NOMBRE", tipo_polarizacion).toString();
+
+		return polarizacion_alias;
+	}
+
+	public static String getTipoEmisionCod(String tipo_emision) {
+
+		String tipo_emision_cod = getColumnCode("COD_TIPO_EMISION", "TIPO_EMISION", "NOMBRE",
+				tipo_emision.toUpperCase()).toString();
+		return tipo_emision_cod;
+	}
+
+	public static String getRadialTexto(String variable_radial, int radiales) {
+		String radial_texto = "";
+
+		switch (variable_radial) {
+		case "perdidas":
+			radial_texto = "M" + radiales + "PL";
+			break;
+		case "zona":
+			radial_texto = "DIS";
+			break;
+		}
+
+		return radial_texto;
+	}
+
+	public static boolean existeCliente(String rut_cliente) {
+		String rut_splitted[] = rut_cliente.split("-");
+		int rut = Integer.parseInt(rut_splitted[0]);
+		String digito_verificador = rut_splitted[1];
+		boolean existe = false;
+		Connection db_connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+
+		try {
+			stmt = db_connection
+					.prepareStatement("SELECT RUT_CLIENTE FROM BDC_SUBTEL.CLIENTES WHERE RUT_CLIENTE = ? AND DV = ?");
+			stmt.setInt(1, rut);
+			stmt.setString(2, digito_verificador);
+
+			res = stmt.executeQuery();
+
+			if (res.next()) {
+				existe = true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		closeAll(db_connection, stmt, res);
+		return existe;
+	}
+
+}
