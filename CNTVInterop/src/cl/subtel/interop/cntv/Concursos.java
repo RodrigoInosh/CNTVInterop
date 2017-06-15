@@ -180,7 +180,7 @@ public class Concursos {
 		boolean correcto = false;
 		Gson gson = new Gson();
 		log.debug(gson.toJson(postulacion));
-		
+
 		String response_message = "";
 		String userID = postulacion.getUserId();
 		BasicDBObject query_conditions = new BasicDBObject();
@@ -193,13 +193,13 @@ public class Concursos {
 
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
-			
+
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
 			String temp_folder = CarpetaTecnica.saveFile(userID, doc);
-			System.out.println("Temp Folder:"+temp_folder);
-//			TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
+			System.out.println("Temp Folder:" + temp_folder);
+			TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
 //			TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
-			
+
 			response_message = "Se recibio la carpeta tecnica";
 			correcto = true;
 		} catch (JSONException e) {
@@ -210,15 +210,15 @@ public class Concursos {
 //			correcto = false;
 //			response_message = "Error SQL";
 //			e.printStackTrace();
-//		} catch (NullPointerException err) {
-//			correcto = false;
-//			response_message = "No existen datos del usuario o datos técnicos guardados";
-//			err.printStackTrace();
+		} catch (NullPointerException err) {
+			correcto = false;
+			response_message = "No existen datos del usuario o datos técnicos guardados";
+			err.printStackTrace();
 		}
-		
+
 		RespuestaDTO respuesta = new RespuestaDTO();
 		String response_code = correcto ? "OK" : "NOK";
-		
+
 		respuesta.setCodigo(response_code);
 		respuesta.setMensaje(response_message);
 		log.info("** FIN recibirCarpetaTecnica **");

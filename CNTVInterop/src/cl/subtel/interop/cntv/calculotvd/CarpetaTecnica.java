@@ -22,14 +22,16 @@ public class CarpetaTecnica {
 
 	public static String saveFile(String userID, DocumentoDTO technical_folder) {
 		String file_name = technical_folder.getNombreArchivo();
-		DataSource fds = new FileDataSource("C:\\Users\\rinostroza\\Documents\\pruebas\\Downloads.zip");
-		DataHandler handler = new DataHandler(fds);
-		// String file_directory = "/Documentos_tecnicos/"+userID+"/";
-		String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\" + userID + "\\";
+		// DataSource fds = new
+		// FileDataSource("C:\\Users\\rinostroza\\Documents\\pruebas\\Downloads.zip");
+		// DataHandler handler = new DataHandler(fds);
+		String file_directory = "/Documentos_tecnicos/" + userID + "/";
+		// String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\"
+		// + userID + "\\";
 
 		try {
-			// InputStream ins = technical_folder.getArchivo().getInputStream();
-			InputStream ins = handler.getInputStream();
+			InputStream ins = technical_folder.getArchivo().getInputStream();
+			// InputStream ins = handler.getInputStream();
 			File zipped_file_folder = new File(file_directory);
 
 			zipped_file_folder.mkdirs();
