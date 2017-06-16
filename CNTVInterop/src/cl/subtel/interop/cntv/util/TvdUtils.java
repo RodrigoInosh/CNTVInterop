@@ -357,6 +357,7 @@ public class TvdUtils {
 		String nombre_archivo = "";
 		int files_count = files_list.length;
 
+		OracleDBUtils.createSolitudConcesiones(user_data.getJSONObject("empresa"));
 		for (int ix = 0; ix < files_count; ix++) {
 			nombre_archivo = files_list[ix].getName();
 			if (nombre_archivo.contains("ZonaServicio_PTx0")) {
@@ -366,29 +367,5 @@ public class TvdUtils {
 				log.debug("Anexo");
 			}
 		}
-		// String nombre_archivo = "";
-		// List<DocumentoDTO> lista = postulacion.getArchivos();
-		// Iterator<?> a = lista.iterator();
-		//
-		// int index_sist_principal = 0;
-		// String user_name;
-		//
-		// try {
-		// user_name = user_data.get("nombre").toString();
-		// while (a.hasNext()) {
-		// DocumentoDTO document = (DocumentoDTO) a.next();
-		// nombre_archivo = document.getNombreArchivo();
-		// // Obtener sistema principal
-		// if (nombre_archivo.contains("ZonaServicio_PTx0")) {
-		// Elemento.insertarDatosSistPrincipal(lista, index_sist_principal,
-		// postulation_code, user_name);
-		// } else if (nombre_archivo.contains("ZonaServicio")) {
-		//
-		// }
-		// index_sist_principal++;
-		// }
-		// } catch (JSONException e) {
-		// e.printStackTrace();
-		// }
 	}
 }

@@ -198,7 +198,7 @@ public class Concursos {
 			String temp_folder = CarpetaTecnica.saveFile(userID, doc);
 			System.out.println("Temp Folder:" + temp_folder);
 			TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
-//			TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
+			TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
 
 			response_message = "Se recibio la carpeta tecnica";
 			correcto = true;
@@ -206,10 +206,10 @@ public class Concursos {
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
 			e.printStackTrace();
-//		} catch (SQLException e) {
-//			correcto = false;
-//			response_message = "Error SQL";
-//			e.printStackTrace();
+		} catch (SQLException e) {
+			correcto = false;
+			response_message = "Error SQL";
+			e.printStackTrace();
 		} catch (NullPointerException err) {
 			correcto = false;
 			response_message = "No existen datos del usuario o datos técnicos guardados";

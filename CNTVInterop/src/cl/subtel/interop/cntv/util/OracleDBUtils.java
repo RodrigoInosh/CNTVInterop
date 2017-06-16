@@ -153,6 +153,38 @@ public class OracleDBUtils {
 		closeAll(connection_oracledb, stmt_query_get_tel_cod, result_tel_cod_query);
 		return tel_cod;
 	}
+	
+	public static void createSolitudConcesiones(JSONObject empresa_data) {
+		System.out.println("----CREANDO SOLICITUD----");
+		
+		Connection db_connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+		
+		final String tipo_solicitud = "TRA";
+		final String tipo_servicio = "STD";
+		Long num_ofi_parte = getNumeroOP();
+		
+		try {
+			db_connection.setAutoCommit(false);
+			
+			int rut_empresa = Integer.parseInt(empresa_data.get("rut").toString());
+			String create_solicitud_query = "INSERT INTO SOLICITUDES_CONCESIONES (tsol_cod_tipo_sol, tserv_cod_tipo_servicio, soli_numero_solicitud, soli_fecha_ingreso, soli_numero_op, "
+					+ "soli_fecha_op, soli_rut, soli_usuario_ingreso, cod_tipo_tramite) VALUES (?, ?, SEQ_SOL.NEXTVAL, SYSDATE, ?, SYSDATE, ?, 'ADM', ?)";
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static Long getNumeroOP() {
+		Long numero_op = 3L;
+		
+		return numero_op;
+	}
 
 	public static boolean insertElemento(Elemento elemento_to_insert, JSONObject datos_sist_principal,
 			boolean is_principal) throws SQLException {
