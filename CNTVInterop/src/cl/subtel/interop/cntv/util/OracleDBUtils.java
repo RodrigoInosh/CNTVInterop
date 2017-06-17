@@ -154,23 +154,36 @@ public class OracleDBUtils {
 		return tel_cod;
 	}
 	
-	public static void createSolitudConcesiones(JSONObject empresa_data) {
+	public static Long createSolitudConcesiones(JSONObject empresa_data) {
 		System.out.println("----CREANDO SOLICITUD----");
 		
 		Connection db_connection = connect();
 		PreparedStatement stmt = null;
-		ResultSet res = null;
 		
 		final String tipo_solicitud = "TRA";
 		final String tipo_servicio = "STD";
+		final Long tipo_tramite = 80L;
 		Long num_ofi_parte = getNumeroOP();
+		Long numero_solicitud = 0L;
 		
 		try {
 			db_connection.setAutoCommit(false);
+			String rut_empresa[] = empresa_data.getString("rut").split("-");
+			int rut_solicitate = Integer.parseInt(rut_empresa[0]);
+			numero_solicitud = getSequenceValue(db_connection, "SEQ_SOL.NEXTVAL");
 			
-			int rut_empresa = Integer.parseInt(empresa_data.get("rut").toString());
 			String create_solicitud_query = "INSERT INTO SOLICITUDES_CONCESIONES (tsol_cod_tipo_sol, tserv_cod_tipo_servicio, soli_numero_solicitud, soli_fecha_ingreso, soli_numero_op, "
-					+ "soli_fecha_op, soli_rut, soli_usuario_ingreso, cod_tipo_tramite) VALUES (?, ?, SEQ_SOL.NEXTVAL, SYSDATE, ?, SYSDATE, ?, 'ADM', ?)";
+					+ "soli_fecha_op, soli_rut, soli_usuario_ingreso, cod_tipo_tramite) VALUES (?, ?, ?, SYSDATE, ?, SYSDATE, ?, 'ADM', ?)";
+			
+			stmt = db_connection.prepareStatement(create_solicitud_query);
+			stmt.setString(1, tipo_solicitud);
+			stmt.setString(2, tipo_servicio);
+			stmt.setLong(3, numero_solicitud);
+			stmt.setLong(4, num_ofi_parte);
+			stmt.setInt(5, rut_solicitate);
+			stmt.setLong(6, tipo_tramite);
+			
+			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (NumberFormatException e) {
@@ -178,12 +191,57 @@ public class OracleDBUtils {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
+		
+		closeStatement(stmt);
+		closeConnection(db_connection);
+		System.out.println(numero_solicitud);
+		return numero_solicitud;
+	}
+	
+	private static Long getSequenceValue(Connection db_connection, String sequence) throws SQLException {
+		Long sequencue_value = 0L;
+		
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+		
+		String query = "SELECT "+sequence+" FROM DUAL";
+		stmt = db_connection.prepareStatement(query);
+		res = stmt.executeQuery();
+		
+		if(res.next()) {
+			sequencue_value = res.getLong("NEXTVAL");
+		}
+		
+		return sequencue_value;
 	}
 	
 	private static Long getNumeroOP() {
 		Long numero_op = 3L;
 		
 		return numero_op;
+	}
+	
+	public static Long createBDCDocumento(Long numero_solicitud, String stdo_codigo) {
+		System.out.println("----CREANDO DOCUMENTO----");
+		
+		Connection db_connection = connect();
+		PreparedStatement stmt = null;
+		
+		Long doc_codigo = 0L;
+		
+		try {
+			String query_insert_document = "INSERT INTO BDC_DOCUMENTOS (doc_codigo, doc_fecha_documento, stdo_codigo, soli_numero_solicitud) VALUES (?, SYSDATE, ?, ?)";
+			doc_codigo = getSequenceValue(db_connection, "SEQ_BDC_DOC.NEXTVAL");
+			stmt = db_connection.prepareStatement(query_insert_document);
+			stmt.setLong(1, doc_codigo);
+			stmt.setString(2, stdo_codigo);
+			stmt.setLong(3, numero_solicitud);
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return doc_codigo;
 	}
 
 	public static boolean insertElemento(Elemento elemento_to_insert, JSONObject datos_sist_principal,

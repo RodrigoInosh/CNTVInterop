@@ -357,15 +357,27 @@ public class TvdUtils {
 		String nombre_archivo = "";
 		int files_count = files_list.length;
 
-		OracleDBUtils.createSolitudConcesiones(user_data.getJSONObject("empresa"));
-		for (int ix = 0; ix < files_count; ix++) {
-			nombre_archivo = files_list[ix].getName();
-			if (nombre_archivo.contains("ZonaServicio_PTx0")) {
-				log.debug("Zona Servicio");
-				Elemento.insertarDatosSistPrincipal(nombre_archivo, postulation_code, user_name);
-			} else {
-				log.debug("Anexo");
+		Long numero_solicitud = OracleDBUtils.createSolitudConcesiones(user_data.getJSONObject("empresa"));
+		Long doc_codigo = OracleDBUtils.createBDCDocumento(numero_solicitud);
+		if (numero_solicitud != 0L) {
+			for (int ix = 0; ix < files_count; ix++) {
+				nombre_archivo = files_list[ix].getName();
+				if (nombre_archivo.contains("ZonaServicio_PTx0")) {
+					log.debug("Zona Servicio");
+					Elemento.insertarDatosSistPrincipal(nombre_archivo, postulation_code, user_name);
+				} else {
+					log.debug("Anexo");
+				}
 			}
 		}
+//		for (int ix = 0; ix < files_count; ix++) {
+//			nombre_archivo = files_list[ix].getName();
+//			if (nombre_archivo.contains("ZonaServicio_PTx0")) {
+//				log.debug("Zona Servicio");
+//				Elemento.insertarDatosSistPrincipal(nombre_archivo, postulation_code, user_name);
+//			} else {
+//				log.debug("Anexo");
+//			}
+//		}
 	}
 }
