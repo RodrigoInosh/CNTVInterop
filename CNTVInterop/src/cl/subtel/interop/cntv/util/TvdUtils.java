@@ -201,7 +201,7 @@ public class TvdUtils {
 				String unextension_file_name = nombre_archivo.split("\\.")[0];
 				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
 
-				if (nombre_archivo.contains("ZonaServicio_PTx0")) {
+				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
 					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, user_name, stdo_codigo);
 				} else {
 					if (!"".equals(stdo_codigo)) {

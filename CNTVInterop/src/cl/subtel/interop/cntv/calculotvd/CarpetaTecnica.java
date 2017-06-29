@@ -23,8 +23,8 @@ public class CarpetaTecnica {
 	public static String saveFile(String userID, DocumentoDTO technical_folder) {
 		String file_name = technical_folder.getNombreArchivo();
 		String file_directory = "/Documentos_tecnicos/" + userID + "/";
-		// String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\"
-		// + userID + "\\";
+//		 String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\"
+//		 + userID + "\\";
 
 		try {
 			InputStream ins = technical_folder.getArchivo().getInputStream();
@@ -120,7 +120,7 @@ public class CarpetaTecnica {
 
 		for (int ix = 0; ix < files_count; ix++) {
 			nombre_archivo = files_list[ix].getName();
-			if (nombre_archivo.contains("ZonaServicio_PTx0")) {
+			if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
 				try {
 					datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion,
 							user_name);
