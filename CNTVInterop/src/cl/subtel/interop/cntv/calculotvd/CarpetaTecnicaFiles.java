@@ -1,4 +1,4 @@
-package cl.subtel.interop.cntv.util;
+package cl.subtel.interop.cntv.calculotvd;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,8 +8,6 @@ import java.io.OutputStream;
 import java.util.Calendar;
 
 import org.apache.cxf.helpers.IOUtils;
-
-import cl.subtel.interop.cntv.calculotvd.CarpetaTecnica;
 
 public class CarpetaTecnicaFiles {
 

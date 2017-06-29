@@ -10,6 +10,7 @@ import java.util.Calendar;
 import org.apache.logging.log4j.Logger;
 
 import cl.subtel.interop.cntv.calculotvd.CarpetaTecnica;
+import cl.subtel.interop.cntv.calculotvd.CarpetaTecnicaFiles;
 import cl.subtel.interop.cntv.calculotvd.Clientes;
 import cl.subtel.interop.cntv.calculotvd.DatosEmpresa;
 import cl.subtel.interop.cntv.calculotvd.Elemento;

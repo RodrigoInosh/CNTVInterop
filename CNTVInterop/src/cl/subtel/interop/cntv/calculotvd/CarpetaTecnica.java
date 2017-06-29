@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -83,7 +84,9 @@ public class CarpetaTecnica {
 			ZipEntry ze = zis.getNextEntry();
 			while (ze != null) {
 				String fileName = ze.getName();
-				File newFile = new File(destDir + File.separator + fileName);
+				byte[] ptext = fileName.getBytes("Cp850");
+				String file_name_chartset = new String(ptext, StandardCharsets.UTF_8);
+				File newFile = new File(destDir + File.separator + file_name_chartset);
 				// create directories for sub directories in zip
 				new File(newFile.getParent()).mkdirs();
 				FileOutputStream fos = new FileOutputStream(newFile);
