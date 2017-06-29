@@ -16,6 +16,7 @@ public class MongoDBUtils {
 		MongoDatabase db = mongo.getDatabase("Calculos");
 		MongoCollection<Document> collection = db.getCollection(collection_name);
 
+		System.out.println(whereQuery);
 		Document myDoc = collection.find(whereQuery).first();
 		JSONObject document_json = null;
 
@@ -33,6 +34,28 @@ public class MongoDBUtils {
 		user_data = MongoDBUtils.getData(query_conditions, "usuariosTVD");
 
 		return user_data;
+	}
+	
+	public static JSONObject getDatosTecnicosConcurso(String nombre_archivo, String codigo_postulacion, String user_name) throws JSONException {
+		String intensidad_campo = "", sist_radiante = "", identificador = "";
+		String splitted_file_name[] = null;
+		BasicDBObject whereQuery = new BasicDBObject();
+
+		splitted_file_name = nombre_archivo.split("_");
+		intensidad_campo = TvdUtils.getIntensityByTypeService(splitted_file_name[0]);
+		sist_radiante = TvdUtils.getSistRadiantTypeByAlias(splitted_file_name[1]);
+		identificador = splitted_file_name[2];
+
+		whereQuery.put("calculos.pIntensidad", intensidad_campo);
+		whereQuery.put("calculos.form_data.carac_tecnicas.sist_radiante", sist_radiante);
+		whereQuery.put("definitivo", "1");
+		whereQuery.put("identificador", identificador);
+		whereQuery.put("codigo_postulacion", codigo_postulacion);
+		whereQuery.put("user", user_name);
+		
+		JSONObject datos_sist_principal = MongoDBUtils.getData(whereQuery, "datosTecnicosCNTV");
+		
+		return datos_sist_principal;
 	}
 
 }

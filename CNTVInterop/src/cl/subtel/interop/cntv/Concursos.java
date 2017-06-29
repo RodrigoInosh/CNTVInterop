@@ -1,25 +1,16 @@
 package cl.subtel.interop.cntv;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebResult;
 import javax.jws.WebService;
 
-import org.apache.cxf.helpers.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
@@ -179,7 +170,7 @@ public class Concursos {
 
 		boolean correcto = false;
 		Gson gson = new Gson();
-		log.debug(gson.toJson(postulacion));
+//		log.debug(gson.toJson(postulacion));
 
 		String response_message = "";
 		String userID = postulacion.getUserId();
@@ -189,19 +180,26 @@ public class Concursos {
 		try {
 			JSONObject user_data = MongoDBUtils.getData(query_conditions, "usuariosTVD");
 
-			log.debug(user_data);
-
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
 
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
+			String nombre_usuario = user_data.get("nombre").toString();
 			String temp_folder = CarpetaTecnica.saveFile(userID, doc);
-			System.out.println("Temp Folder:" + temp_folder);
-			TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
-			TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
+			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
+					postulacion.getCodigoPostulacion(), nombre_usuario);
 
-			response_message = "Se recibio la carpeta tecnica";
-			correcto = true;
+			log.debug(response_validate_data);
+
+			if ("".equals(response_validate_data)) {
+				TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
+				TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
+
+				response_message = "Se recibio la carpeta tecnica";
+				correcto = true;
+			} else {
+				response_message = response_validate_data;
+			}
 		} catch (JSONException e) {
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
@@ -221,6 +219,8 @@ public class Concursos {
 
 		respuesta.setCodigo(response_code);
 		respuesta.setMensaje(response_message);
+		log.debug("Cod:" + response_code);
+		log.debug("Msg:" + response_message);
 		log.info("** FIN recibirCarpetaTecnica **");
 		return respuesta;
 	}
@@ -234,7 +234,7 @@ public class Concursos {
 		log.debug(gson.toJson(paginaCalculo));
 
 		RespuestaDTO respuesta = new RespuestaDTO();
-		System.out.print(gson.toJson(paginaCalculo));
+
 		respuesta.setCodigo("OK");
 		respuesta.setMensaje("Se recibio la carpeta tecnica");
 		log.info("** FIN paginaCalculo **");

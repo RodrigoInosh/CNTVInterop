@@ -20,16 +20,12 @@ public class OracleDBUtils {
 	private static final int ID_TRDL_ZONA_SERVICIO = 3;
 
 	public static Connection connect() {
-		System.out.println("-------- Oracle JDBC Connection Testing ------");
-
 		try {
 			Class.forName("oracle.jdbc.driver.OracleDriver");
 		} catch (ClassNotFoundException e) {
-			System.out.println("Where is your Oracle JDBC Driver?");
 			e.printStackTrace();
 		}
 
-		System.out.println("Oracle JDBC Driver Registered!");
 		Connection connection = null;
 
 		try {
@@ -38,12 +34,6 @@ public class OracleDBUtils {
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
-		}
-
-		if (connection != null) {
-			System.out.println("You made it, take control your database now!");
-		} else {
-			System.out.println("Failed to make connection!");
 		}
 
 		return connection;
@@ -77,7 +67,6 @@ public class OracleDBUtils {
 	}
 
 	public static void closeConnection(Connection connection) {
-
 		if (connection != null) {
 			try {
 				connection.close();
@@ -109,6 +98,7 @@ public class OracleDBUtils {
 
 	public static Object getColumnCode(String cod_column_name, String table_name, String where_column_name,
 			String where_column_value) {
+
 		Connection connection = connect();
 		PreparedStatement stmt = null;
 		ResultSet res = null;
@@ -153,28 +143,27 @@ public class OracleDBUtils {
 		closeAll(connection_oracledb, stmt_query_get_tel_cod, result_tel_cod_query);
 		return tel_cod;
 	}
-	
-	public static Long createSolitudConcesiones(JSONObject empresa_data) {
+
+	public static Long createSolitudConcesiones(Long num_ofi_parte, JSONObject empresa_data) {
 		System.out.println("----CREANDO SOLICITUD----");
-		
+
 		Connection db_connection = connect();
 		PreparedStatement stmt = null;
-		
+
 		final String tipo_solicitud = "TRA";
 		final String tipo_servicio = "STD";
 		final Long tipo_tramite = 80L;
-		Long num_ofi_parte = getNumeroOP();
+
 		Long numero_solicitud = 0L;
-		
+
 		try {
 			db_connection.setAutoCommit(false);
-			String rut_empresa[] = empresa_data.getString("rut").split("-");
+			String rut_empresa[] = empresa_data.get("rut").toString().split("-");
 			int rut_solicitate = Integer.parseInt(rut_empresa[0]);
 			numero_solicitud = getSequenceValue(db_connection, "SEQ_SOL.NEXTVAL");
-			
 			String create_solicitud_query = "INSERT INTO SOLICITUDES_CONCESIONES (tsol_cod_tipo_sol, tserv_cod_tipo_servicio, soli_numero_solicitud, soli_fecha_ingreso, soli_numero_op, "
-					+ "soli_fecha_op, soli_rut, soli_usuario_ingreso, cod_tipo_tramite) VALUES (?, ?, ?, SYSDATE, ?, SYSDATE, ?, 'ADM', ?)";
-			
+					+ "soli_fecha_op, soli_rut, soli_usuario_ingreso, cod_tipo_tramite, id_ejecutivo, SOLI_FLAG, TOR_CODIGO, SOLI_CORRELATIVO) VALUES (?, ?, ?, SYSDATE, ?, SYSDATE, ?, 'ADM', ?, 'ADM', 0, 10, 0)";
+
 			stmt = db_connection.prepareStatement(create_solicitud_query);
 			stmt.setString(1, tipo_solicitud);
 			stmt.setString(2, tipo_servicio);
@@ -182,7 +171,7 @@ public class OracleDBUtils {
 			stmt.setLong(4, num_ofi_parte);
 			stmt.setInt(5, rut_solicitate);
 			stmt.setLong(6, tipo_tramite);
-			
+
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -191,44 +180,78 @@ public class OracleDBUtils {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
+
 		closeStatement(stmt);
 		closeConnection(db_connection);
-		System.out.println(numero_solicitud);
+
 		return numero_solicitud;
 	}
-	
+
 	private static Long getSequenceValue(Connection db_connection, String sequence) throws SQLException {
 		Long sequencue_value = 0L;
-		
+
 		PreparedStatement stmt = null;
 		ResultSet res = null;
-		
-		String query = "SELECT "+sequence+" FROM DUAL";
+
+		String query = "SELECT " + sequence + " FROM DUAL";
 		stmt = db_connection.prepareStatement(query);
 		res = stmt.executeQuery();
-		
-		if(res.next()) {
+
+		if (res.next()) {
 			sequencue_value = res.getLong("NEXTVAL");
 		}
-		
+
+		closeResultSet(res);
+		closeStatement(stmt);
+
 		return sequencue_value;
 	}
-	
-	private static Long getNumeroOP() {
-		Long numero_op = 3L;
-		
+
+	public static Long getNumeroOP(JSONObject empresa_data) {
+		Long numero_op = 0L;
+
+		Connection db_connection = connect();
+		PreparedStatement insert_numero_op_stmt = null;
+
+		try {
+			numero_op = getSequenceValue(db_connection, "SEQ_OP.NEXTVAL");
+			String observaciones = "";
+			int rut_empresa = Integer.parseInt(empresa_data.get("rut").toString().split("-")[0]);
+			String nombre_empresa_remitente = empresa_data.getString("razonSocial").toString();
+			int op_fecha_ing = TvdUtils.getFormattedOPDate();
+			int op_fecha_recep = TvdUtils.getFormattedOPDate();
+			String query_numero_op = "insert into GABINETE.OFICINA_PARTES (op_num_ing, op_fecha_ing, trm_cod, td_codigo, mat_cod, d_codigo, op_obs, op_rut_sol, op_tipo_pers, op_fecha_recep, ts_codigo, remitente, "
+					+ "usuario_creacion, fecha_creacion, process_link_pdf, id_tipo_ing, id_tipo_tramite) VALUES (?, ?, 'PTECNTV', 'CTTVD', 'TVD', 'CON', ?, ?, 'J', ?, 'R2', ?, 'PTECNTV', SYSDATE, 'S', 0, 80)";
+
+			insert_numero_op_stmt = db_connection.prepareStatement(query_numero_op);
+			insert_numero_op_stmt.setLong(1, numero_op);
+			insert_numero_op_stmt.setInt(2, op_fecha_ing);
+			insert_numero_op_stmt.setString(3, observaciones);
+			insert_numero_op_stmt.setInt(4, rut_empresa);
+			insert_numero_op_stmt.setInt(5, op_fecha_recep);
+			insert_numero_op_stmt.setString(6, nombre_empresa_remitente);
+
+			insert_numero_op_stmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		closeStatement(insert_numero_op_stmt);
+		closeConnection(db_connection);
+
 		return numero_op;
 	}
-	
+
 	public static Long createBDCDocumento(Long numero_solicitud, String stdo_codigo) {
 		System.out.println("----CREANDO DOCUMENTO----");
-		
+
 		Connection db_connection = connect();
 		PreparedStatement stmt = null;
-		
+
 		Long doc_codigo = 0L;
-		
+
 		try {
 			String query_insert_document = "INSERT INTO BDC_DOCUMENTOS (doc_codigo, doc_fecha_documento, stdo_codigo, soli_numero_solicitud) VALUES (?, SYSDATE, ?, ?)";
 			doc_codigo = getSequenceValue(db_connection, "SEQ_BDC_DOC.NEXTVAL");
@@ -236,26 +259,31 @@ public class OracleDBUtils {
 			stmt.setLong(1, doc_codigo);
 			stmt.setString(2, stdo_codigo);
 			stmt.setLong(3, numero_solicitud);
-			
+
+			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
+		closeStatement(stmt);
+		closeConnection(db_connection);
+
 		return doc_codigo;
 	}
 
 	public static boolean insertElemento(Elemento elemento_to_insert, JSONObject datos_sist_principal,
-			boolean is_principal) throws SQLException {
+			boolean is_principal, Long numero_solicitud, String stdo_codigo) throws SQLException {
 
 		System.out.println("----INSERTANDO ELEMENTO----");
 		boolean inserted_ok = false;
 		Connection connection = connect();
 		PreparedStatement stmt = null;
 		ResultSet generatedKeys = null;
-		Long inserted_elm_codigo = 0L;
-		System.out.println(elemento_to_insert.getRut_cliente());
-		connection.setAutoCommit(false);
 		String insert_element = "INSERT INTO bdc_elementos(elm_codigo, elm_nombre, CLI_RUT_CLIENTE, COD_TIPO_SERVICIO, tel_codigo, tec_codigo, ELM_FECHA_INGRESO) values (SEQ_BDC_ELM.NEXTVAL, ?, ?, ?, ?, ?, SYSDATE)";
+		Long inserted_elm_codigo = 0L;
+
+		connection.setAutoCommit(false);
+
 		stmt = connection.prepareStatement(insert_element, new String[] { "elm_codigo" });
 		stmt.setString(1, elemento_to_insert.getElm_nombre());
 		stmt.setInt(2, elemento_to_insert.getRut_cliente());
@@ -265,12 +293,16 @@ public class OracleDBUtils {
 		stmt.executeUpdate();
 
 		generatedKeys = stmt.getGeneratedKeys();
+
 		if (null != generatedKeys && generatedKeys.next()) {
 			inserted_elm_codigo = generatedKeys.getLong(1);
+
 			if (is_principal) {
-				DatosElemento elemento_datos = TvdUtils.createObjectElementoDatos(inserted_elm_codigo,
+				Long doc_codigo = OracleDBUtils.createBDCDocumento(numero_solicitud, stdo_codigo);
+				DatosElemento elemento_datos = DatosElemento.createObjectElementoDatos(inserted_elm_codigo,
 						datos_sist_principal);
-				inserted_ok = OracleDBUtils.insertDatosElemento(datos_sist_principal, elemento_datos, connection);
+				inserted_ok = OracleDBUtils.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos,
+						connection);
 			} else {
 				inserted_ok = true;
 			}
@@ -288,25 +320,26 @@ public class OracleDBUtils {
 		return inserted_ok;
 	}
 
-	public static boolean insertDatosElemento(JSONObject datos_sist_principal, DatosElemento elemento_datos,
-			Connection connection) {
+	public static boolean insertDatosElemento(Long doc_codigo, JSONObject datos_sist_principal,
+			DatosElemento elemento_datos, Connection connection) {
 
 		System.out.println("----INSERTANDO DATOS ELEMENTO----");
 		boolean inserted_ok = false;
 		PreparedStatement stmt = null;
 		ResultSet generatedKeys = null;
 		Long inserted_elm_codigo = 0L;
+
 		try {
 			String insert_element = "insert into bdc_datos_elementos (DTE_CODIGO, elm_codigo, dte_direccion, cod_comuna, cod_localidad, latitud_calculada, longitud_calculada,latitud_wgs84, longitud_wgs84, banda, "
 					+ "polarizacion, tipoemision, POTENCIA, PUNTOTX, GANANCIA, ALTURAANTENA, TILT, PERDIDASCABLES,UBICACIONESTUDIOPRINCIPAL, UBICACIONESTUDIOALTERNATIVO, UBICACIONPLANTATRANSMISORA, "
 					+ "INTENSIDADCAMPO, PLAZOINICIOOBRAS, PLAZOTERMINOOBRAS, PLAZOINICIOSERVICIO,ACTIVIDADECONOMICA, CANTIDADELEMENTOS, UNIDADPOTENCIA, UNIDADGANANCIA, COD_REGION, PERDIDASDIVPOTENCIA, FRECUENCIA, "
 					+ "FECHA_CREACION, ESTADO_ELEMENTO,GANANCIA_HORIZONTAL, TCR_CODIGO, TIAN_COD, DTE_LATITUD_SUR_GR, DTE_LATITUD_SUR_MI,DTE_LATITUD_SUR_SG, DTE_LONGITUD_OESTE_GR, DTE_LONGITUD_OESTE_MI, "
-					+ "DTE_LONGITUD_OESTE_SG,OTRASPERDIDAS, DTE_MOVIMIENTO) VALUES (SEQ_BDC_DELM.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, SYSDATE,?,?,?,?,?,?,?,?,?,?,?,?)";
+					+ "DTE_LONGITUD_OESTE_SG,OTRASPERDIDAS, DTE_MOVIMIENTO, DOC_CODIGO, ZONASERVICIO) VALUES (SEQ_BDC_DELM.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, SYSDATE,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 			stmt = connection.prepareStatement(insert_element, new String[] { "DTE_CODIGO" });
 			stmt.setLong(1, elemento_datos.getElm_codigo());
 			stmt.setString(2, elemento_datos.getDte_direccion());
-			stmt.setInt(3, elemento_datos.getCod_comuna());
+			stmt.setLong(3, elemento_datos.getCod_comuna());
 			stmt.setLong(4, elemento_datos.getCod_localidad());
 			stmt.setDouble(5, elemento_datos.getLatitud_calculada());
 			stmt.setDouble(6, elemento_datos.getLongitud_calculada());
@@ -347,6 +380,8 @@ public class OracleDBUtils {
 			stmt.setInt(41, elemento_datos.getDte_longitud_oeste_sg());
 			stmt.setDouble(42, elemento_datos.getOtras_perdidas());
 			stmt.setString(43, DatosElemento.getDteMovimiento());
+			stmt.setLong(44, doc_codigo);
+			stmt.setString(45, elemento_datos.getZona_servicio());
 			stmt.executeUpdate();
 
 			generatedKeys = stmt.getGeneratedKeys();
@@ -358,6 +393,9 @@ public class OracleDBUtils {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
+		closeResultSet(generatedKeys);
+		closeStatement(stmt);
 		return inserted_ok;
 	}
 
@@ -396,6 +434,7 @@ public class OracleDBUtils {
 
 		System.out.println("----INSERTANDO DATOS RADIALES: " + variable_radial + "----");
 		JSONObject calculos = null;
+		PreparedStatement stmt = null;
 		boolean inserted_ok = false;
 
 		try {
@@ -405,8 +444,6 @@ public class OracleDBUtils {
 
 			int idx_loop = 0;
 			int grados_secuencia = 360 / radiales;
-
-			PreparedStatement stmt = null;
 
 			stmt = db_connection.prepareStatement(
 					"INSERT INTO BDC_DATOS_RADIALES (ID_DRAD, ID_DERAD, DERAD_GRADO, DERAD_VALOR) VALUES (BDC_SUBTEL.SEQ_DRAD_ID.NEXTVAL, ?, ?, ?)");
@@ -423,15 +460,15 @@ public class OracleDBUtils {
 				stmt.addBatch();
 				idx_loop++;
 			}
-			int cant_valores_insertados[] = stmt.executeBatch();
-			System.out.println("Datos insertados: " + cant_valores_insertados.length);
+
+			stmt.executeBatch();
 			inserted_ok = true;
-			stmt.close();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		closeStatement(stmt);
 
 		return inserted_ok;
 	}
@@ -441,6 +478,7 @@ public class OracleDBUtils {
 		System.out.println("----INSERTANDO DATOS ARREGLO ANTENAS----");
 
 		boolean inserted_ok = false;
+		PreparedStatement stmt = null;
 		try {
 			JSONObject form_data = new JSONObject(
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""))
@@ -461,11 +499,12 @@ public class OracleDBUtils {
 			int numero_elementos = Integer
 					.parseInt(form_data.getJSONObject("carac_tecnicas").get("num_elem").toString());
 
-			PreparedStatement stmt = db_connection.prepareStatement(
+			stmt = db_connection.prepareStatement(
 					"INSERT INTO BDC_ARREGLO_ANTENA (ID_ARREGLO,ELEM_CODIGO, NUMERO_ARREGLO, ALTURA, UNIDAD_ALTURA, LARGO_VASTAGO, UNIDAD_LARGO_VASTAGO, "
 							+ "AZIMUT_VASTAGO, UNIDAD_AZIMUT_VASTAGO, AZIMUT_ANTENA, UNIDAD_AZIMUT_ANTENA, GANANCIA_ANTENA, UNIDAD_GANANCIA_ANTENA, POLARIZACION, MARCA, MODELO, FASE, UNIDAD_FASE, POTENCIA) VALUES"
 							+ "(BDC_SUBTEL.SEQ_BDC_AANTENA.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			int idx_loop = 0;
+
 			while (idx_loop < numero_elementos) {
 				stmt.setLong(1, elm_codigo);
 				stmt.setString(2, numero.get("ant_num" + idx_loop).toString());
@@ -490,15 +529,15 @@ public class OracleDBUtils {
 				idx_loop++;
 			}
 
-			int arreglos_insertados[] = stmt.executeBatch();
-			System.out.println("Arreglos Insertados:" + arreglos_insertados.length);
+			stmt.executeBatch();
 			inserted_ok = true;
-			stmt.close();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
+		closeStatement(stmt);
 
 		return inserted_ok;
 	}
@@ -522,11 +561,12 @@ public class OracleDBUtils {
 			if (null != res && res.next()) {
 				id_derad = res.getLong(1);
 			}
-			res.close();
-			stmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
+		closeResultSet(res);
+		closeStatement(stmt);
 
 		return id_derad;
 	}
@@ -581,6 +621,7 @@ public class OracleDBUtils {
 		int rut = Integer.parseInt(rut_splitted[0]);
 		String digito_verificador = rut_splitted[1];
 		boolean existe = false;
+
 		Connection db_connection = connect();
 		PreparedStatement stmt = null;
 		ResultSet res = null;
@@ -599,8 +640,112 @@ public class OracleDBUtils {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
 		closeAll(db_connection, stmt, res);
 		return existe;
 	}
 
+	public static Long getCodigoLocalidad(Long cod_comuna) {
+		Long codigo = 0L;
+
+		Connection connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+
+		try {
+			stmt = connection.prepareStatement("SELECT cod_localidad FROM LOCALIDAD WHERE COM_COD_COMUNA = ?");
+			stmt.setLong(1, cod_comuna);
+			res = stmt.executeQuery();
+
+			if (res.next()) {
+				codigo = res.getLong("cod_localidad");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		closeAll(connection, stmt, res);
+
+		return codigo;
+	}
+
+	public static Long getCodigoComuna(String nombre_comuna) {
+		Long codigo = 0L;
+
+		Connection connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+
+		try {
+			stmt = connection
+					.prepareStatement("SELECT COD_COMUNA FROM VIEW_STI_DPA3_COMUNAS WHERE UPPER(COMUNA) = UPPER(?)");
+			stmt.setString(1, nombre_comuna);
+			res = stmt.executeQuery();
+
+			if (res.next()) {
+				codigo = res.getLong("COD_COMUNA");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		closeAll(connection, stmt, res);
+
+		return codigo;
+	}
+
+	public static Long getCodigoRegion(Long cod_comuna) {
+		Long codigo = 0L;
+
+		Connection connection = connect();
+		PreparedStatement stmt = null;
+		ResultSet res = null;
+
+		try {
+			stmt = connection.prepareStatement("SELECT REG_COD_REGION FROM COMUNA WHERE cod_comuna = ?");
+			stmt.setLong(1, cod_comuna);
+			res = stmt.executeQuery();
+
+			if (res.next()) {
+				codigo = res.getLong("REG_COD_REGION");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		closeAll(connection, stmt, res);
+
+		return codigo;
+	}
+
+	public static void createWftDocumento(String doc_path, String stdo_codigo, Long num_solicitud, Long num_ofi_parte) {
+
+		Connection db_connection = null;
+		PreparedStatement stmt_new_wft_document = null;
+
+		try {
+
+			db_connection = connect();
+			stmt_new_wft_document = null;
+			String query_eft_doc = "INSERT INTO wft_documentos (NUMERO_DOCUMENTO, FECHA_DOCUMENTO, NRO_OFPARTES, STDO_CODIGO, NRO_SOLICITUD, USUARIO_INGRESO, FECHA_INGRESO, PATH) "
+					+ "values (BDC_SUBTEL.SEQ_OFP.NEXTVAL, SYSDATE, ?, ?, ?, 'ADM', SYSDATE, ?)";
+			
+			stmt_new_wft_document = db_connection.prepareStatement(query_eft_doc);
+			stmt_new_wft_document.setLong(1, num_ofi_parte);
+			stmt_new_wft_document.setString(2, stdo_codigo);
+			stmt_new_wft_document.setLong(3, num_solicitud);
+			stmt_new_wft_document.setString(4, doc_path);
+			
+//			System.out.println("---------");
+//			System.out.println("Stdo:"+stdo_codigo);
+//			System.out.println("path:"+doc_path);
+//			System.out.println("---------");
+			stmt_new_wft_document.executeUpdate();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		
+		closeStatement(stmt_new_wft_document);
+		closeConnection(db_connection);
+	}
 }
