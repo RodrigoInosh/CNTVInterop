@@ -23,8 +23,8 @@ public class CarpetaTecnica {
 	public static String saveFile(String userID, DocumentoDTO technical_folder) {
 		String file_name = technical_folder.getNombreArchivo();
 		String file_directory = "/Documentos_tecnicos/" + userID + "/";
-//		 String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\"
-//		 + userID + "\\";
+		// String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\"
+		// + userID + "\\";
 
 		try {
 			InputStream ins = technical_folder.getArchivo().getInputStream();
@@ -84,7 +84,7 @@ public class CarpetaTecnica {
 			ZipEntry ze = zis.getNextEntry();
 			while (ze != null) {
 				String fileName = ze.getName();
-				byte[] ptext = fileName.getBytes("Cp850");
+				byte[] ptext = fileName.getBytes("UTF-8");
 				String file_name_chartset = new String(ptext, StandardCharsets.UTF_8);
 				File newFile = new File(destDir + File.separator + file_name_chartset);
 				// create directories for sub directories in zip

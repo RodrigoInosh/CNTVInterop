@@ -31,7 +31,7 @@ public class OracleDBUtils {
 		try {
 			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
 			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.28:1521:reclamo";
-			connection = DriverManager.getConnection(db_url_production);
+			connection = DriverManager.getConnection(db_url_develop);
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
@@ -335,7 +335,7 @@ public class OracleDBUtils {
 					+ "polarizacion, tipoemision, POTENCIA, PUNTOTX, GANANCIA, ALTURAANTENA, TILT, PERDIDASCABLES,UBICACIONESTUDIOPRINCIPAL, UBICACIONESTUDIOALTERNATIVO, UBICACIONPLANTATRANSMISORA, "
 					+ "INTENSIDADCAMPO, PLAZOINICIOOBRAS, PLAZOTERMINOOBRAS, PLAZOINICIOSERVICIO,ACTIVIDADECONOMICA, CANTIDADELEMENTOS, UNIDADPOTENCIA, UNIDADGANANCIA, COD_REGION, PERDIDASDIVPOTENCIA, FRECUENCIA, "
 					+ "FECHA_CREACION, ESTADO_ELEMENTO,GANANCIA_HORIZONTAL, TCR_CODIGO, TIAN_COD, DTE_LATITUD_SUR_GR, DTE_LATITUD_SUR_MI,DTE_LATITUD_SUR_SG, DTE_LONGITUD_OESTE_GR, DTE_LONGITUD_OESTE_MI, "
-					+ "DTE_LONGITUD_OESTE_SG,OTRASPERDIDAS, DTE_MOVIMIENTO, DOC_CODIGO, ZONASERVICIO) VALUES (SEQ_BDC_DELM.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, SYSDATE,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+					+ "DTE_LONGITUD_OESTE_SG,OTRASPERDIDAS, DTE_MOVIMIENTO, DOC_CODIGO, ZONASERVICIO, ANTENA, DIAGRAMADERADIACION) VALUES (SEQ_BDC_DELM.NEXTVAL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, SYSDATE,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 			stmt = connection.prepareStatement(insert_element, new String[] { "DTE_CODIGO" });
 			stmt.setLong(1, elemento_datos.getElm_codigo());
@@ -383,6 +383,8 @@ public class OracleDBUtils {
 			stmt.setString(43, DatosElemento.getDteMovimiento());
 			stmt.setLong(44, doc_codigo);
 			stmt.setString(45, elemento_datos.getZona_servicio());
+			stmt.setString(46, elemento_datos.getTipo_antena_nombre());
+			stmt.setString(47, elemento_datos.getTipo_radiacion());
 			stmt.executeUpdate();
 
 			generatedKeys = stmt.getGeneratedKeys();
@@ -409,10 +411,41 @@ public class OracleDBUtils {
 		boolean inserted_dist_ok = insertDatosRadiales(datos_sist_principal, inserted_elm_data_codigo,
 				ID_TRDL_ZONA_SERVICIO, "zona", connection);
 		boolean inserted_arreglo_ok = insertArregloAntena(datos_sist_principal, elem_codigo, connection);
+		boolean inserted_detalle_rtv = insertDetalleRTV(datos_sist_principal, inserted_elm_data_codigo, connection);
 
-		if (inserted_perdidas_ok && inserted_dist_ok && inserted_arreglo_ok) {
+		if (inserted_perdidas_ok && inserted_dist_ok && inserted_arreglo_ok && inserted_detalle_rtv) {
 			inserted_ok = true;
 		}
+
+		return inserted_ok;
+	}
+
+	public static boolean insertDetalleRTV(JSONObject datos_sist_principal, Long dte_codigo, Connection db_connection) {
+		System.out.println("----INSERTANDO DATOS DETALLE RTV----");
+
+		boolean inserted_ok = false;
+		PreparedStatement stmt = null;
+		try {
+			JSONObject calculos = new JSONObject(
+					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
+			String canal = calculos.get("canal").toString();
+
+			stmt = db_connection.prepareStatement(
+					"INSERT INTO BDC_DETALLE_RTV (ID_DETRTV, DTE_CODIGO, CANAL) VALUES (SEQ_DETALLE_TV.NEXTVAL, ?, ?)");
+
+			stmt.setLong(1, dte_codigo);
+			stmt.setString(2, canal);
+
+			stmt.executeUpdate();
+
+			inserted_ok = true;
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		closeStatement(stmt);
 
 		return inserted_ok;
 	}
@@ -730,22 +763,22 @@ public class OracleDBUtils {
 			stmt_new_wft_document = null;
 			String query_eft_doc = "INSERT INTO wft_documentos (NUMERO_DOCUMENTO, FECHA_DOCUMENTO, NRO_OFPARTES, STDO_CODIGO, NRO_SOLICITUD, USUARIO_INGRESO, FECHA_INGRESO, PATH) "
 					+ "values (BDC_SUBTEL.SEQ_OFP.NEXTVAL, SYSDATE, ?, ?, ?, 'ADM', SYSDATE, ?)";
-			
+
 			stmt_new_wft_document = db_connection.prepareStatement(query_eft_doc);
 			stmt_new_wft_document.setLong(1, num_ofi_parte);
 			stmt_new_wft_document.setString(2, stdo_codigo);
 			stmt_new_wft_document.setLong(3, num_solicitud);
 			stmt_new_wft_document.setString(4, doc_path);
-			
-//			System.out.println("---------");
-//			System.out.println("Stdo:"+stdo_codigo);
-//			System.out.println("path:"+doc_path);
-//			System.out.println("---------");
+
+			// System.out.println("---------");
+			// System.out.println("Stdo:"+stdo_codigo);
+			// System.out.println("path:"+doc_path);
+			// System.out.println("---------");
 			stmt_new_wft_document.executeUpdate();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		
+
 		closeStatement(stmt_new_wft_document);
 		closeConnection(db_connection);
 	}

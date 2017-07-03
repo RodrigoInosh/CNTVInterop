@@ -71,6 +71,15 @@ public class DatosElemento {
 	private int dte_longitud_oeste_sg;
 	private double otras_perdidas;
 	private String zona_servicio;
+	private String tipo_radiacion;
+
+	public String getTipo_radiacion() {
+		return tipo_radiacion;
+	}
+
+	public void setTipo_radiacion(String tipo_radiacion) {
+		this.tipo_radiacion = tipo_radiacion;
+	}
 
 	public String getTipo_emision() {
 		return tipo_emision;
@@ -242,14 +251,6 @@ public class DatosElemento {
 
 	public String getTipo_antena_nombre() {
 		return tipo_antena_nombre;
-	}
-
-	public void setTipo_antena_nombre(double MAX_PERDIDA_LOBULO) {
-		if (MAX_PERDIDA_LOBULO > 3) {
-			this.tipo_antena_nombre = "DIRECCIONAL";
-		} else {
-			this.tipo_antena_nombre = "Omnidireccional";
-		}
 	}
 
 	public String getPerdidas_cable() {
@@ -501,9 +502,9 @@ public class DatosElemento {
 
 			String direccion = calculos.get("pDomicilio").toString();
 			String localidad = calculos.get("pLocalidad").toString();
-//			String comuna = calculos.get("pComuna").toString();
 			String comuna = caract_tecnicas.get("comunaPTx").toString();
 			String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
+			String tipo_radiacion = getTipoRadiacion(calculos);
 			String tian_cod = OracleDBUtils.getTianCod(nombre_tipo_antena);
 			double latitud = Double.parseDouble(calculos.get("latitud").toString());
 			double longitud = Double.parseDouble(calculos.get("longitud").toString());
@@ -516,7 +517,6 @@ public class DatosElemento {
 			String ganacia_max = caract_tecnicas.get("ganancia_max").toString();
 			String altura_antena_tx = calculos.get("pAlturaAntenaTx").toString();
 			String tilt = caract_tecnicas.get("angulo_tilt").toString();
-			String tipo_antena_nombre = "";
 			String perdidas_cables = calculos.get("pPerdidaCablesConectores").toString();
 			String ubicacion_est_principal = getUbicacion(est_principal.get("domicilio").toString(),
 					est_principal.get("comuna").toString(), est_principal.get("region").toString());
@@ -587,6 +587,8 @@ public class DatosElemento {
 			datos_elemento_object.setDte_longitud_oeste_min(longitud_minutos);
 			datos_elemento_object.setDte_longitud_oeste_sg(longitud_segundos);
 			datos_elemento_object.setZona_servicio(zona_servicio);
+			datos_elemento_object.setTipo_radiacion(tipo_radiacion);
+			datos_elemento_object.setTipo_antena_nombre(nombre_tipo_antena);
 
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -660,5 +662,69 @@ public class DatosElemento {
 		}
 
 		return message_response;
+	}
+	
+	public static String getTipoRadiacion(JSONObject calculos) {
+		String tipo_radiacion = "";
+		int min_perdida_lobulo = Integer.MAX_VALUE;
+		int max_perdida_lobulo = 0;
+		
+		try {
+			int radiales = Integer.parseInt(calculos.get("radiales").toString());
+			int grados = 360 / radiales;
+			
+			int perd_lobulo_actual;
+			
+			for(int ix = 0; ix < radiales; ix++){
+				perd_lobulo_actual = Integer.parseInt(calculos.get("M"+radiales+"PL"+(grados*ix)).toString());
+				min_perdida_lobulo = getMinValue(min_perdida_lobulo, perd_lobulo_actual);
+				max_perdida_lobulo = getMaxValue(max_perdida_lobulo, perd_lobulo_actual);
+			}
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		int diferencia = max_perdida_lobulo - min_perdida_lobulo;
+		tipo_radiacion = getNameTipoRadiacion(diferencia);
+		
+		return tipo_radiacion;
+	}
+	
+	private static int getMinValue(int min_perdida_lobulo, int perd_lobulo_actual) {
+		int minimo = 0;
+		
+		if(min_perdida_lobulo > perd_lobulo_actual) {
+			minimo = perd_lobulo_actual;
+		} else {
+			minimo = min_perdida_lobulo;
+		}
+		
+		return minimo;
+	}
+	
+	private static int getMaxValue(int max_perdida_lobulo, int perd_lobulo_actual) {
+		int minimo = 0;
+		
+		if(max_perdida_lobulo < perd_lobulo_actual) {
+			minimo = perd_lobulo_actual;
+		} else {
+			minimo = max_perdida_lobulo;
+		}
+		
+		return minimo;
+	}
+	
+	private static String getNameTipoRadiacion(int diferencia) {
+		String tipo_radiacion = "";
+		
+		if(diferencia > 3) {
+			tipo_radiacion = "DIR";
+		} else {
+			tipo_radiacion = "OMN";
+		}
+		
+		return tipo_radiacion;
 	}
 }
