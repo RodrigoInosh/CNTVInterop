@@ -31,7 +31,7 @@ public class OracleDBUtils {
 		try {
 			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
 			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.28:1521:reclamo";
-			connection = DriverManager.getConnection(db_url_develop);
+			connection = DriverManager.getConnection(db_url_production);
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
@@ -429,12 +429,15 @@ public class OracleDBUtils {
 			JSONObject calculos = new JSONObject(
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
 			String canal = calculos.get("canal").toString();
-
-			stmt = db_connection.prepareStatement(
-					"INSERT INTO BDC_DETALLE_RTV (ID_DETRTV, DTE_CODIGO, CANAL) VALUES (SEQ_DETALLE_TV.NEXTVAL, ?, ?)");
+			Long potencia = Long.parseLong(calculos.get("pPotencia").toString());
+			
+			stmt = db_connection.prepareStatement("INSERT INTO BDC_DETALLE_RTV "
+				+ "(ID_DETRTV, DTE_CODIGO, CANAL, POTENCIAVIDEO, UNIDADPOTENCIAVIDEO) VALUES (SEQ_DETALLE_TV.NEXTVAL,?,?,?,?)");
 
 			stmt.setLong(1, dte_codigo);
 			stmt.setString(2, canal);
+			stmt.setLong(3, potencia);
+			stmt.setLong(4, Long.parseLong(DatosElemento.getUnidadPotencia()));
 
 			stmt.executeUpdate();
 
