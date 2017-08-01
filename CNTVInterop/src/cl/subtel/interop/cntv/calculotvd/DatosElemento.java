@@ -591,6 +591,7 @@ public class DatosElemento {
 			datos_elemento_object.setTipo_antena_nombre(nombre_tipo_antena);
 
 		} catch (JSONException e) {
+			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
 
@@ -666,17 +667,17 @@ public class DatosElemento {
 	
 	public static String getTipoRadiacion(JSONObject calculos) {
 		String tipo_radiacion = "";
-		int min_perdida_lobulo = Integer.MAX_VALUE;
-		int max_perdida_lobulo = 0;
+		double min_perdida_lobulo = Integer.MAX_VALUE;
+		double max_perdida_lobulo = 0;
 		
 		try {
 			int radiales = Integer.parseInt(calculos.get("radiales").toString());
 			int grados = 360 / radiales;
 			
-			int perd_lobulo_actual;
+			double perd_lobulo_actual;
 			
 			for(int ix = 0; ix < radiales; ix++){
-				perd_lobulo_actual = Integer.parseInt(calculos.get("M"+radiales+"PL"+(grados*ix)).toString());
+				perd_lobulo_actual = Double.parseDouble(calculos.get("M"+radiales+"PL"+(grados*ix)).toString());
 				min_perdida_lobulo = getMinValue(min_perdida_lobulo, perd_lobulo_actual);
 				max_perdida_lobulo = getMaxValue(max_perdida_lobulo, perd_lobulo_actual);
 			}
@@ -686,14 +687,14 @@ public class DatosElemento {
 			e.printStackTrace();
 		}
 		
-		int diferencia = max_perdida_lobulo - min_perdida_lobulo;
+		double diferencia = max_perdida_lobulo - min_perdida_lobulo;
 		tipo_radiacion = getNameTipoRadiacion(diferencia);
 		
 		return tipo_radiacion;
 	}
 	
-	private static int getMinValue(int min_perdida_lobulo, int perd_lobulo_actual) {
-		int minimo = 0;
+	private static double getMinValue(double min_perdida_lobulo, double perd_lobulo_actual) {
+		double minimo = 0;
 		
 		if(min_perdida_lobulo > perd_lobulo_actual) {
 			minimo = perd_lobulo_actual;
@@ -704,8 +705,8 @@ public class DatosElemento {
 		return minimo;
 	}
 	
-	private static int getMaxValue(int max_perdida_lobulo, int perd_lobulo_actual) {
-		int minimo = 0;
+	private static double getMaxValue(double max_perdida_lobulo, double perd_lobulo_actual) {
+		double minimo = 0;
 		
 		if(max_perdida_lobulo < perd_lobulo_actual) {
 			minimo = perd_lobulo_actual;
@@ -716,7 +717,7 @@ public class DatosElemento {
 		return minimo;
 	}
 	
-	private static String getNameTipoRadiacion(int diferencia) {
+	private static String getNameTipoRadiacion(double diferencia) {
 		String tipo_radiacion = "";
 		
 		if(diferencia > 3) {

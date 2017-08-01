@@ -133,8 +133,10 @@ public class Clientes {
 			try {
 				db_connection.rollback();
 			} catch (SQLException e1) {
+				System.out.println(e1.getMessage());
 				e1.printStackTrace();
 			}
+			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
 		OracleDBUtils.closeStatement(stmt_insert_cliente);
@@ -186,8 +188,10 @@ public class Clientes {
 			try {
 				db_connection.rollback();
 			} catch (SQLException e1) {
+				log.error(e1.getMessage());
 				e1.printStackTrace();
 			}
+			log.error(e.getMessage());
 			e.printStackTrace();
 		}
 		OracleDBUtils.closeStatement(stmt_insert_cliente);

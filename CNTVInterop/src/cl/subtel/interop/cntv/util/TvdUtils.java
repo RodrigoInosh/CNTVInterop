@@ -182,7 +182,7 @@ public class TvdUtils {
 
 	public static void insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
 			Logger log) throws SQLException, JSONException {
-
+		System.out.println("insertDocumentDataToMatriz");
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
 		String user_name = user_data.get("nombre").toString();
@@ -210,6 +210,7 @@ public class TvdUtils {
 				}
 				
 				String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
+				System.out.println("Doc path:"+ doc_path);
 				if (!"".equals(stdo_codigo)) {
 					count_doc++;
 					OracleDBUtils.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);

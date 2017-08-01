@@ -187,7 +187,6 @@ public class Concursos {
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
 			String nombre_usuario = user_data.get("nombre").toString();
 			String temp_folder = CarpetaTecnica.saveFile(userID, doc);
-//			CarpetaTecnica.unzip("C:\\Users\\rinostroza\\Documents\\pruebas\\zipped\\zip_carpeta_tecnica.zip", "C:\\Users\\rinostroza\\Documents\\pruebas\\unzipped");
 			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
 					postulacion.getCodigoPostulacion(), nombre_usuario);
 
@@ -205,13 +204,16 @@ public class Concursos {
 		} catch (JSONException e) {
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
+			System.out.println("recibirCarpetaTecnica:"+e.getMessage());
 			e.printStackTrace();
 		} catch (SQLException e) {
 			correcto = false;
+			System.out.println("recibirCarpetaTecnica:"+e.getMessage());
 			response_message = "Error SQL";
 			e.printStackTrace();
 		} catch (NullPointerException err) {
 			correcto = false;
+			System.out.println("recibirCarpetaTecnica:"+err.getMessage());
 			response_message = "No existen datos del usuario o datos técnicos guardados";
 			err.printStackTrace();
 		}

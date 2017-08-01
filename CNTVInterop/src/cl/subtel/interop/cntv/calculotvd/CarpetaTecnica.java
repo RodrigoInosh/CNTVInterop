@@ -37,6 +37,7 @@ public class CarpetaTecnica {
 			ins.close();
 			unzip(file_directory + file_name, file_directory);
 		} catch (IOException e) {
+			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
 
@@ -84,6 +85,7 @@ public class CarpetaTecnica {
 			ZipEntry ze = zis.getNextEntry();
 			while (ze != null) {
 				String fileName = ze.getName();
+				System.out.println(fileName);
 				byte[] ptext = fileName.getBytes("UTF-8");
 				String file_name_chartset = new String(ptext, StandardCharsets.UTF_8);
 				File newFile = new File(destDir + File.separator + file_name_chartset);
@@ -127,6 +129,7 @@ public class CarpetaTecnica {
 					DatosElemento datos_elemento = DatosElemento.createObjectElementoDatos(0L, datos_sist_principal);
 					validate_message = datos_elemento.validateData();
 				} catch (JSONException e) {
+					System.out.println("error validateDataTecnica: "+ e.getMessage());
 					e.printStackTrace();
 				}
 			}

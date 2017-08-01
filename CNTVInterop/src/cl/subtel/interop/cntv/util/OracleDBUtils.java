@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -30,7 +31,7 @@ public class OracleDBUtils {
 
 		try {
 			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
-			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.28:1521:reclamo";
+			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.50:1521:reclamos";
 			connection = DriverManager.getConnection(db_url_production);
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
@@ -562,11 +563,11 @@ public class OracleDBUtils {
 				stmt.setInt(17, ArregloAntena.getUnidadFase());
 				stmt.setString(18, potencia.get("ant_pot" + idx_loop).toString());
 
-				stmt.addBatch();
+				stmt.executeUpdate();
 				idx_loop++;
 			}
 
-			stmt.executeBatch();
+//			stmt.executeBatch();
 			inserted_ok = true;
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -756,7 +757,7 @@ public class OracleDBUtils {
 	}
 
 	public static void createWftDocumento(String doc_path, String stdo_codigo, Long num_solicitud, Long num_ofi_parte) {
-
+		System.out.println("createWftDocumento");
 		Connection db_connection = null;
 		PreparedStatement stmt_new_wft_document = null;
 
@@ -779,6 +780,7 @@ public class OracleDBUtils {
 			// System.out.println("---------");
 			stmt_new_wft_document.executeUpdate();
 		} catch (Exception ex) {
+			System.out.println(ex.getMessage());
 			ex.printStackTrace();
 		}
 
