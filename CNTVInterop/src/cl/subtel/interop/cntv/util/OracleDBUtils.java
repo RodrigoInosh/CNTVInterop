@@ -154,7 +154,7 @@ public class OracleDBUtils {
 
 		final String tipo_solicitud = "TRA";
 		final String tipo_servicio = "STD";
-		final Long tipo_tramite = 80L;
+		final Long tipo_tramite = 1L;
 
 		Long numero_solicitud = 0L;
 
@@ -374,12 +374,12 @@ public class OracleDBUtils {
 			stmt.setString(33, elemento_datos.getGanancia_horizontal());
 			stmt.setInt(34, DatosElemento.getTcrCodigo());
 			stmt.setString(35, elemento_datos.getTian_cod());
-			stmt.setInt(36, elemento_datos.getDte_latitud_sur_gr());
-			stmt.setInt(37, elemento_datos.getDte_latitud_sur_min());
-			stmt.setInt(38, elemento_datos.getDte_latitud_sur_sg());
-			stmt.setInt(39, elemento_datos.getDte_longitud_oeste_gr());
-			stmt.setInt(40, elemento_datos.getDte_longitud_oeste_min());
-			stmt.setInt(41, elemento_datos.getDte_longitud_oeste_sg());
+			stmt.setDouble(36, elemento_datos.getDte_latitud_sur_gr());
+			stmt.setDouble(37, elemento_datos.getDte_latitud_sur_min());
+			stmt.setDouble(38, elemento_datos.getDte_latitud_sur_sg());
+			stmt.setDouble(39, elemento_datos.getDte_longitud_oeste_gr());
+			stmt.setDouble(40, elemento_datos.getDte_longitud_oeste_min());
+			stmt.setDouble(41, elemento_datos.getDte_longitud_oeste_sg());
 			stmt.setDouble(42, elemento_datos.getOtras_perdidas());
 			stmt.setString(43, DatosElemento.getDteMovimiento());
 			stmt.setLong(44, doc_codigo);
@@ -673,9 +673,11 @@ public class OracleDBUtils {
 			res = stmt.executeQuery();
 
 			if (res.next()) {
+				System.out.println("Existe cliente:" + res.getString("RUT_CLIENTE"));
 				existe = true;
 			}
 		} catch (SQLException e) {
+			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
 
@@ -774,10 +776,9 @@ public class OracleDBUtils {
 			stmt_new_wft_document.setLong(3, num_solicitud);
 			stmt_new_wft_document.setString(4, doc_path);
 
-			// System.out.println("---------");
-			// System.out.println("Stdo:"+stdo_codigo);
-			// System.out.println("path:"+doc_path);
-			// System.out.println("---------");
+			 System.out.println("---------");
+			 System.out.println("Stdo:"+stdo_codigo + " - Num Soli: "+ num_solicitud);
+			 System.out.println("---------");
 			stmt_new_wft_document.executeUpdate();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());

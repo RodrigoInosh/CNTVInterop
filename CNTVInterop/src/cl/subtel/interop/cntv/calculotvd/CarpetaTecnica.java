@@ -81,14 +81,14 @@ public class CarpetaTecnica {
 
 		try {
 			fis = new FileInputStream(zipFilePath);
-			ZipInputStream zis = new ZipInputStream(fis, Charset.forName("Cp850"));
+			ZipInputStream zis = new ZipInputStream(fis, Charset.forName("UTF-8"));
 			ZipEntry ze = zis.getNextEntry();
 			while (ze != null) {
 				String fileName = ze.getName();
 				System.out.println(fileName);
-				byte[] ptext = fileName.getBytes("UTF-8");
-				String file_name_chartset = new String(ptext, StandardCharsets.UTF_8);
-				File newFile = new File(destDir + File.separator + file_name_chartset);
+//				byte[] ptext = fileName.getBytes("UTF-8");
+//				String file_name_chartset = new String(ptext, StandardCharsets.UTF_8);
+				File newFile = new File(destDir + File.separator + fileName);
 				// create directories for sub directories in zip
 				new File(newFile.getParent()).mkdirs();
 				FileOutputStream fos = new FileOutputStream(newFile);

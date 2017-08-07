@@ -63,12 +63,12 @@ public class DatosElemento {
 	private String perdidas_div_potencia;
 	private String ganancia_horizontal;
 	private double frecuencia;
-	private int dte_latitud_sur_gr;
-	private int dte_latitud_sur_min;
-	private int dte_latitud_sur_sg;
-	private int dte_longitud_oeste_gr;
-	private int dte_longitud_oeste_min;
-	private int dte_longitud_oeste_sg;
+	private double dte_latitud_sur_gr;
+	private double dte_latitud_sur_min;
+	private double dte_latitud_sur_sg;
+	private double dte_longitud_oeste_gr;
+	private double dte_longitud_oeste_min;
+	private double dte_longitud_oeste_sg;
 	private double otras_perdidas;
 	private String zona_servicio;
 	private String tipo_radiacion;
@@ -373,51 +373,51 @@ public class DatosElemento {
 		this.frecuencia = frecuencia;
 	}
 
-	public int getDte_latitud_sur_gr() {
+	public double getDte_latitud_sur_gr() {
 		return dte_latitud_sur_gr;
 	}
 
-	public void setDte_latitud_sur_gr(int dte_latitud_sur_gr) {
+	public void setDte_latitud_sur_gr(double dte_latitud_sur_gr) {
 		this.dte_latitud_sur_gr = dte_latitud_sur_gr;
 	}
 
-	public int getDte_latitud_sur_min() {
+	public double getDte_latitud_sur_min() {
 		return dte_latitud_sur_min;
 	}
 
-	public void setDte_latitud_sur_min(int dte_latitud_sur_min) {
+	public void setDte_latitud_sur_min(double dte_latitud_sur_min) {
 		this.dte_latitud_sur_min = dte_latitud_sur_min;
 	}
 
-	public int getDte_latitud_sur_sg() {
+	public double getDte_latitud_sur_sg() {
 		return dte_latitud_sur_sg;
 	}
 
-	public void setDte_latitud_sur_sg(int dte_latitud_sur_sg) {
+	public void setDte_latitud_sur_sg(double dte_latitud_sur_sg) {
 		this.dte_latitud_sur_sg = dte_latitud_sur_sg;
 	}
 
-	public int getDte_longitud_oeste_gr() {
+	public double getDte_longitud_oeste_gr() {
 		return dte_longitud_oeste_gr;
 	}
 
-	public void setDte_longitud_oeste_gr(int dte_longitud_oeste_gr) {
+	public void setDte_longitud_oeste_gr(double dte_longitud_oeste_gr) {
 		this.dte_longitud_oeste_gr = dte_longitud_oeste_gr;
 	}
 
-	public int getDte_longitud_oeste_min() {
+	public double getDte_longitud_oeste_min() {
 		return dte_longitud_oeste_min;
 	}
 
-	public void setDte_longitud_oeste_min(int dte_longitud_oeste_min) {
+	public void setDte_longitud_oeste_min(double dte_longitud_oeste_min) {
 		this.dte_longitud_oeste_min = dte_longitud_oeste_min;
 	}
 
-	public int getDte_longitud_oeste_sg() {
+	public double getDte_longitud_oeste_sg() {
 		return dte_longitud_oeste_sg;
 	}
 
-	public void setDte_longitud_oeste_sg(int dte_longitud_oeste_sg) {
+	public void setDte_longitud_oeste_sg(double dte_longitud_oeste_sg) {
 		this.dte_longitud_oeste_sg = dte_longitud_oeste_sg;
 	}
 
@@ -506,14 +506,14 @@ public class DatosElemento {
 			String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
 			String tipo_radiacion = getTipoRadiacion(calculos);
 			String tian_cod = OracleDBUtils.getTianCod(nombre_tipo_antena);
-			double latitud = Double.parseDouble(calculos.get("latitud").toString());
-			double longitud = Double.parseDouble(calculos.get("longitud").toString());
-			double polarizacion_perc_horizontal = Double.parseDouble(caract_tecnicas.get("perc_horizontal").toString());
-			double polarizacion_perc_vertical = Double.parseDouble(caract_tecnicas.get("perc_vertical").toString());
+			double latitud = getDoubleValue(calculos, "latitud");
+			double longitud = getDoubleValue(calculos, "longitud");
+			double polarizacion_perc_horizontal = getDoubleValue(caract_tecnicas, "perc_horizontal");
+			double polarizacion_perc_vertical = getDoubleValue(caract_tecnicas, "perc_vertical");
 			String polarizacion_cod = OracleDBUtils.getPolarizacionCod(polarizacion_perc_horizontal,
 					polarizacion_perc_vertical);
 			String tipo_emision_cod = OracleDBUtils.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
-			double potencia = Double.parseDouble(calculos.get("pPotencia").toString());
+			double potencia = getDoubleValue(calculos, "pPotencia");
 			String ganacia_max = caract_tecnicas.get("ganancia_max").toString();
 			String altura_antena_tx = calculos.get("pAlturaAntenaTx").toString();
 			String tilt = caract_tecnicas.get("angulo_tilt").toString();
@@ -537,14 +537,14 @@ public class DatosElemento {
 			
 			String perdidas_div_potencia = calculos.get("pDivisorPotencia").toString();
 			String ganancia_plano_horizontal = calculos.get("pGanancia").toString();
-			double frecuencia = Double.parseDouble(calculos.get("pFrecuencia").toString());
-			double otras_perdidas = Double.parseDouble(calculos.get("pOtrasPerdidas").toString());
-			int latitud_grados = Integer.parseInt(calculos.get("pLatitudDegress").toString());
-			int latitud_minutos = Integer.parseInt(calculos.get("pLatitudMinutes").toString());
-			int latitud_segundos = Integer.parseInt(calculos.get("pLatitudSeconds").toString());
-			int longitud_grados = Integer.parseInt(calculos.get("pLongitudDegress").toString());
-			int longitud_minutos = Integer.parseInt(calculos.get("pLongitudMinutes").toString());
-			int longitud_segundos = Integer.parseInt(calculos.get("pLongitudSeconds").toString());
+			double frecuencia = getDoubleValue(calculos, "pFrecuencia");
+			double otras_perdidas = getDoubleValue(calculos, "pOtrasPerdidas");
+			double latitud_grados = getDoubleValue(calculos, "pLatitudDegress");
+			double latitud_minutos = getDoubleValue(calculos, "pLatitudMinutes");
+			double latitud_segundos = getDoubleValue(calculos, "pLatitudSeconds");
+			double longitud_grados = getDoubleValue(calculos, "pLongitudDegress");
+			double longitud_minutos = getDoubleValue(calculos, "pLongitudMinutes");
+			double longitud_segundos = getDoubleValue(calculos, "pLongitudSeconds");
 			String zona_servicio = datos_sist_principal.get("identificador").toString();
 			
 			datos_elemento_object.setElm_codigo(elemento_id);
@@ -596,6 +596,19 @@ public class DatosElemento {
 		}
 
 		return datos_elemento_object;
+	}
+	
+	public static double getDoubleValue(JSONObject object, String name_field) {
+		double value = 0;
+		try {
+			value = Double.parseDouble(object.get(name_field).toString());
+		} catch (NumberFormatException e) {
+//			e.printStackTrace();
+		} catch (JSONException e) {
+//			e.printStackTrace();
+		}
+		
+		return value;
 	}
 
 	public static String getNombreTipoAntena(String tipo_antena) {

@@ -12,10 +12,11 @@ import org.apache.cxf.helpers.IOUtils;
 public class CarpetaTecnicaFiles {
 
 	public final static String PATH = "/cntv/Postulaciones";
-	public final static String SERVER_ROOT_PATH = "\\\\Repcedoc\\Dosubtel\\CNTV\\Postulaciones";
-//	public final static String SERVER_ROOT_PATH = "/Repcedoc/Dosubtel/CNTV/Postulaciones";
+//	public final static String SERVER_ROOT_PATH = "\\\\Repcedoc\\Dosubtel\\CNTV\\Postulaciones";
+	public final static String SERVER_ROOT_PATH = "/Repcedoc/Dosubtel/CNTV/Postulaciones";
 	// public final static String PATH =
 	// "C:\\Users\\rinostroza\\Documents\\pruebas";
+//	public final static String FILE_SEPARATOR = "\\";
 	public final static String FILE_SEPARATOR = "/";
 
 	public final static String LISTADO_EQUIPOS = "file_cat_listado_equipos";
