@@ -32,7 +32,7 @@ public class OracleDBUtils {
 		try {
 			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
 			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.50:1521:reclamos";
-			connection = DriverManager.getConnection(db_url_production);
+			connection = DriverManager.getConnection(db_url_develop);
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
@@ -214,6 +214,7 @@ public class OracleDBUtils {
 
 		Connection db_connection = connect();
 		PreparedStatement insert_numero_op_stmt = null;
+		PreparedStatement insert_op_eventos = null;
 
 		try {
 			numero_op = getSequenceValue(db_connection, "SEQ_OP.NEXTVAL");
@@ -232,11 +233,43 @@ public class OracleDBUtils {
 			insert_numero_op_stmt.setInt(4, rut_empresa);
 			insert_numero_op_stmt.setInt(5, op_fecha_recep);
 			insert_numero_op_stmt.setString(6, nombre_empresa_remitente);
-
+			
 			insert_numero_op_stmt.executeUpdate();
+			System.out.println(numero_op);
+			String query_evento_op = "INSERT INTO GABINETE.OP_EVENTOS_ING (ID_EVENTO_ING, NRO_OP_ING, FECHA_OP_ING, ESTADO, DESTINO, PLAZO, GLOSA, VIGENCIA, FECHA_CREACION, "
+					+ "USUARIO_CREACION) VALUES (?, ?, SYSDATE, 1, 'CON', 0, 'Concurso TVD', 1, SYSDATE, 'ADM')";
+
+			boolean is_inserted_ok = false;
+			int intentos = 0;
+			while (!is_inserted_ok) {
+				intentos++;
+				try {
+					System.out.println("dgdsgdsgs");
+					Long id_evento = getIdEventoIngresoOP();
+					System.out.println("Evento:" + id_evento);
+					insert_op_eventos = db_connection.prepareStatement(query_evento_op);
+					insert_op_eventos.setLong(1, id_evento);
+					insert_op_eventos.setLong(2, numero_op);
+
+					insert_op_eventos.executeUpdate();
+				} catch (SQLException err) {
+					String error = err.getSQLState();
+					System.out.println(error);
+					closeStatement(insert_op_eventos);
+					if(err.getSQLState().equals("23000")) {
+						is_inserted_ok = false;
+						continue;
+					} else {
+						is_inserted_ok = true;
+					}
+				}
+			}
+			System.out.println("numero intentos:"+intentos);
 		} catch (SQLException e) {
+			numero_op = 0L;
 			e.printStackTrace();
 		} catch (JSONException e) {
+			numero_op = 0L;
 			e.printStackTrace();
 		}
 
@@ -244,6 +277,27 @@ public class OracleDBUtils {
 		closeConnection(db_connection);
 
 		return numero_op;
+	}
+
+	private static Long getIdEventoIngresoOP() {
+		Long id_evento_op = 0L;
+
+		Connection db_connection = connect();
+		Statement stmt = null;
+		ResultSet res = null;
+
+		try {
+			stmt = db_connection.createStatement();
+			res = stmt.executeQuery("SELECT MAX(ID_EVENTO_ING)+1 AS id_evento FROM GABINETE.OP_EVENTOS_ING");
+
+			if (res.next()) {
+				id_evento_op = res.getLong("id_evento");
+			}
+		} catch (SQLException err) {
+			System.out.println(err.getMessage());
+		}
+
+		return id_evento_op;
 	}
 
 	public static Long createBDCDocumento(Long numero_solicitud, String stdo_codigo) {
@@ -431,9 +485,9 @@ public class OracleDBUtils {
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
 			String canal = calculos.get("canal").toString();
 			Long potencia = Long.parseLong(calculos.get("pPotencia").toString());
-			
+
 			stmt = db_connection.prepareStatement("INSERT INTO BDC_DETALLE_RTV "
-				+ "(ID_DETRTV, DTE_CODIGO, CANAL, POTENCIAVIDEO, UNIDADPOTENCIAVIDEO) VALUES (SEQ_DETALLE_TV.NEXTVAL,?,?,?,?)");
+					+ "(ID_DETRTV, DTE_CODIGO, CANAL, POTENCIAVIDEO, UNIDADPOTENCIAVIDEO) VALUES (SEQ_DETALLE_TV.NEXTVAL,?,?,?,?)");
 
 			stmt.setLong(1, dte_codigo);
 			stmt.setString(2, canal);
@@ -456,16 +510,16 @@ public class OracleDBUtils {
 
 	/**
 	 * @param datos_sist_principal
-	 *            Corresponde a la información almacenada en Mongo de los
-	 *            calculos predictivos
+	 *            Corresponde a la información almacenada en Mongo de los calculos
+	 *            predictivos
 	 * @param datos_elemento_id
 	 *            ID relación con la tabla bdc_datos_elementos
 	 * @param id_tdl
-	 *            ID correspondiente al tipo de radial (Perd Lob: 4, Zona
-	 *            Servicio: 3)
+	 *            ID correspondiente al tipo de radial (Perd Lob: 4, Zona Servicio:
+	 *            3)
 	 * @param variable_radial
-	 *            Nombre del radial que se va a guardar (perdidas: Perdidas
-	 *            Lóbulo, zona: Zona de Servicio)
+	 *            Nombre del radial que se va a guardar (perdidas: Perdidas Lóbulo,
+	 *            zona: Zona de Servicio)
 	 */
 	public static boolean insertDatosRadiales(JSONObject datos_sist_principal, Long datos_elemento_id, int id_tdl,
 			String variable_radial, Connection db_connection) {
@@ -567,7 +621,7 @@ public class OracleDBUtils {
 				idx_loop++;
 			}
 
-//			stmt.executeBatch();
+			// stmt.executeBatch();
 			inserted_ok = true;
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -776,9 +830,9 @@ public class OracleDBUtils {
 			stmt_new_wft_document.setLong(3, num_solicitud);
 			stmt_new_wft_document.setString(4, doc_path);
 
-			 System.out.println("---------");
-			 System.out.println("Stdo:"+stdo_codigo + " - Num Soli: "+ num_solicitud);
-			 System.out.println("---------");
+			System.out.println("---------");
+			System.out.println("Stdo:" + stdo_codigo + " - Num Soli: " + num_solicitud);
+			System.out.println("---------");
 			stmt_new_wft_document.executeUpdate();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());

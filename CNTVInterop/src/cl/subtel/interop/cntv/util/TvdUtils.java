@@ -191,8 +191,7 @@ public class TvdUtils {
 
 		Long num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
 		Long numero_solicitud = OracleDBUtils.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
-//		Long num_ofi_parte = 12L;
-//		Long numero_solicitud = 12L;
+
 		int count_doc = 0;
 		
 		if (numero_solicitud != 0L) {
