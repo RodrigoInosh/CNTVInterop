@@ -32,7 +32,7 @@ public class OracleDBUtils {
 		try {
 			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
 			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.50:1521:reclamos";
-			connection = DriverManager.getConnection(db_url_develop);
+			connection = DriverManager.getConnection(db_url_production);
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
