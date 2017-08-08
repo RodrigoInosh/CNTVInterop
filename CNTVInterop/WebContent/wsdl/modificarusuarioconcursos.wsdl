@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="ModificarUsuarioConcursosService" targetNamespace="http://cntv.interop.subtel.cl/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://cntv.interop.subtel.cl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <schema xmlns="http://www.w3.org/2001/XMLSchema">
+  <import namespace="http://cntv.interop.subtel.cl/" schemaLocation="modificarusuarioconcursos_schema1.xsd"/>
+</schema>
+  </wsdl:types>
+  <wsdl:message name="modificarUsuarioResponse">
+    <wsdl:part name="parameters" element="tns:modificarUsuarioResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="modificarUsuario">
+    <wsdl:part name="parameters" element="tns:modificarUsuario">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="ModificarUsuarioConcursos">
+    <wsdl:operation name="modificarUsuario">
+      <wsdl:input name="modificarUsuario" message="tns:modificarUsuario">
+    </wsdl:input>
+      <wsdl:output name="modificarUsuarioResponse" message="tns:modificarUsuarioResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ModificarUsuarioConcursosServiceSoapBinding" type="tns:ModificarUsuarioConcursos">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="modificarUsuario">
+      <soap:operation soapAction="urn:ModificarUsuario" style="document"/>
+      <wsdl:input name="modificarUsuario">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="modificarUsuarioResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="ModificarUsuarioConcursosService">
+    <wsdl:port name="ModificarUsuarioConcursosPort" binding="tns:ModificarUsuarioConcursosServiceSoapBinding">
+      <soap:address location="http://localhost:8080/CNTVInterop/services/ModificarUsuarioConcursosPort"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

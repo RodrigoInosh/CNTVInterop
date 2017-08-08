@@ -16,5 +16,14 @@
 			<bean class="org.apache.cxf.feature.LoggingFeature" />
 		</jaxws:features>
 	</jaxws:endpoint>
-	<bean class="cl.subtel.interop.cntv.util.ServerPasswordCallback" id="myPasswordCallback" />
+	<bean class="cl.subtel.interop.cntv.util.ServerPasswordCallback"
+		id="myPasswordCallback" />
+	<jaxws:endpoint xmlns:tns="http://cntv.interop.subtel.cl/"
+		id="modificarusuarioconcursos" implementor="cl.subtel.interop.cntv.ModificarUsuarioConcursos"
+		wsdlLocation="wsdl/modificarusuarioconcursos.wsdl" endpointName="tns:ModificarUsuarioConcursosPort"
+		serviceName="tns:ModificarUsuarioConcursosService" address="/ModificarUsuarioConcursosPort">
+		<jaxws:features>
+			<bean class="org.apache.cxf.feature.LoggingFeature" />
+		</jaxws:features>
+	</jaxws:endpoint>
 </beans>
