@@ -224,7 +224,7 @@ public class OracleDBUtils {
 			int op_fecha_ing = TvdUtils.getFormattedOPDate();
 			int op_fecha_recep = TvdUtils.getFormattedOPDate();
 			String query_numero_op = "insert into GABINETE.OFICINA_PARTES (op_num_ing, op_fecha_ing, trm_cod, td_codigo, mat_cod, d_codigo, op_obs, op_rut_sol, op_tipo_pers, op_fecha_recep, ts_codigo, remitente, "
-					+ "usuario_creacion, fecha_creacion, process_link_pdf, id_tipo_ing, id_tipo_tramite) VALUES (?, ?, 'PTECNTV', 'CTTVD', 'TVD', 'CON', ?, ?, 'J', ?, 'R2', ?, 'PTECNTV', SYSDATE, 'S', 0, 80)";
+					+ "usuario_creacion, fecha_creacion, process_link_pdf, id_tipo_ing, id_tipo_tramite) VALUES (?, ?, 'PTECNTV', 'CTTVD', 'TVD', 'CON', ?, ?, 'J', ?, 'R2', ?, 3, SYSDATE, 'S', 0, 80)";
 
 			insert_numero_op_stmt = db_connection.prepareStatement(query_numero_op);
 			insert_numero_op_stmt.setLong(1, numero_op);
@@ -235,7 +235,7 @@ public class OracleDBUtils {
 			insert_numero_op_stmt.setString(6, nombre_empresa_remitente);
 			
 			insert_numero_op_stmt.executeUpdate();
-			System.out.println(numero_op);
+			System.out.println("OP: "+numero_op);
 			String query_evento_op = "INSERT INTO GABINETE.OP_EVENTOS_ING (ID_EVENTO_ING, NRO_OP_ING, FECHA_OP_ING, ESTADO, DESTINO, PLAZO, GLOSA, VIGENCIA, FECHA_CREACION, "
 					+ "USUARIO_CREACION) VALUES (?, ?, SYSDATE, 1, 'CON', 0, 'Concurso TVD', 1, SYSDATE, 'ADM')";
 
@@ -244,17 +244,15 @@ public class OracleDBUtils {
 			while (!is_inserted_ok) {
 				intentos++;
 				try {
-					System.out.println("dgdsgdsgs");
 					Long id_evento = getIdEventoIngresoOP();
-					System.out.println("Evento:" + id_evento);
 					insert_op_eventos = db_connection.prepareStatement(query_evento_op);
 					insert_op_eventos.setLong(1, id_evento);
 					insert_op_eventos.setLong(2, numero_op);
 
 					insert_op_eventos.executeUpdate();
+					is_inserted_ok = true;
 				} catch (SQLException err) {
-					String error = err.getSQLState();
-					System.out.println(error);
+					System.out.println(err.getMessage());
 					closeStatement(insert_op_eventos);
 					if(err.getSQLState().equals("23000")) {
 						is_inserted_ok = false;
