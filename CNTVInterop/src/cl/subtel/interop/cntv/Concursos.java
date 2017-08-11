@@ -209,12 +209,12 @@ public class Concursos {
 		} catch (SQLException e) {
 			correcto = false;
 			System.out.println("recibirCarpetaTecnica:"+e.getMessage());
-			response_message = "Error en postulación, contactarse con: vsanchez@subtel.gob.cl";
+			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
 			e.printStackTrace();
 		} catch (NullPointerException err) {
 			correcto = false;
 			System.out.println("recibirCarpetaTecnica:"+err.getMessage());
-			response_message = "Error en postulación, contactarse con: vsanchez@subtel.gob.cl";
+			response_message = "No existen datos del usuario o datos técnicos guardados";
 			err.printStackTrace();
 		}
 

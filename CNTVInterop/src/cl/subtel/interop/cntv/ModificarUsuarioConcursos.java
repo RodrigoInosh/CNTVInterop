@@ -33,9 +33,9 @@ public class ModificarUsuarioConcursos {
 	@WebMethod(operationName = "modificarUsuario", action = "urn:ModificarUsuario")
 	@WebResult(name = "return")
 	@SuppressWarnings("deprecation")
-	public RespuestaDTO modificarUsuario(@WebParam(name = "usuario") UsuarioDTO usuario,
-			@WebParam(name = "empresa") EmpresaDTO empresa,
-			@WebParam(name = "representante") RepresentanteLegalDTO representante) {
+	public RespuestaDTO modificarUsuario(@WebParam(name = "arg0") UsuarioDTO usuario,
+			@WebParam(name = "arg1") EmpresaDTO empresa,
+			@WebParam(name = "arg2") RepresentanteLegalDTO representante) {
 		
 		log.info("** AgregarUsuario ha sido invocado **");
 		RespuestaDTO respuesta = new RespuestaDTO();

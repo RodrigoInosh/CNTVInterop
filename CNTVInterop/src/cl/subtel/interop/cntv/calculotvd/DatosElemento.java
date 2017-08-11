@@ -502,7 +502,7 @@ public class DatosElemento {
 
 			String direccion = calculos.get("pDomicilio").toString();
 			String localidad = calculos.get("pLocalidad").toString();
-			String comuna = caract_tecnicas.get("comunaPTx").toString();
+			String comuna = caract_tecnicas.get("comunaNamePTx").toString();
 			String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
 			String tipo_radiacion = getTipoRadiacion(calculos);
 			String tian_cod = OracleDBUtils.getTianCod(nombre_tipo_antena);
@@ -531,8 +531,8 @@ public class DatosElemento {
 			String pot_max_tx = calculos.get("pPotencia").toString();
 			String cantidad_elem = caract_tecnicas.get("num_elem").toString();
 
-			Long cod_comuna = OracleDBUtils.getCodigoComuna(comuna);
-			Long cod_region = OracleDBUtils.getCodigoRegion(cod_comuna);
+			Long cod_comuna = getLongValue(caract_tecnicas.get("comunaPTx").toString());//OracleDBUtils.getCodigoComuna(comuna);
+			Long cod_region = getLongValue(caract_tecnicas.get("regionPTx").toString());//OracleDBUtils.getCodigoRegion(cod_comuna);
 			Long cod_localidad = OracleDBUtils.getCodigoLocalidad(cod_comuna);
 			
 			String perdidas_div_potencia = calculos.get("pDivisorPotencia").toString();
@@ -596,6 +596,17 @@ public class DatosElemento {
 		}
 
 		return datos_elemento_object;
+	}
+	
+	public static Long getLongValue(String value) {
+		Long cast_value = 0L;
+		try {
+			cast_value = Long.parseLong(value);
+		} catch (NumberFormatException e) {
+//			e.printStackTrace();
+		}
+		
+		return cast_value;
 	}
 	
 	public static double getDoubleValue(JSONObject object, String name_field) {

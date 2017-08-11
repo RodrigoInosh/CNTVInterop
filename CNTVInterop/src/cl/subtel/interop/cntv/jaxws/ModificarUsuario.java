@@ -19,11 +19,11 @@ import javax.xml.bind.annotation.XmlType;
 
 public class ModificarUsuario {
 
-    @XmlElement(name = "usuario")
+    @XmlElement(name = "arg0")
     private cl.subtel.interop.cntv.dto.UsuarioDTO arg0;
-    @XmlElement(name = "empresa")
+    @XmlElement(name = "arg1")
     private cl.subtel.interop.cntv.dto.EmpresaDTO arg1;
-    @XmlElement(name = "representante")
+    @XmlElement(name = "arg2")
     private cl.subtel.interop.cntv.dto.RepresentanteLegalDTO arg2;
 
     public cl.subtel.interop.cntv.dto.UsuarioDTO getArg0() {
