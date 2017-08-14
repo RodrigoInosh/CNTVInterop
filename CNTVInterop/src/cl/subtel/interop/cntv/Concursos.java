@@ -173,6 +173,7 @@ public class Concursos {
 		Gson gson = new Gson();
 //		log.debug(gson.toJson(postulacion));
 
+		String temp_folder = "";
 		String response_message = "";
 		String userID = postulacion.getUserId();
 		BasicDBObject query_conditions = new BasicDBObject();
@@ -183,15 +184,15 @@ public class Concursos {
 
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
-
+			temp_folder = CarpetaTecnica.saveFile(userID, doc);
+			
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
 			String nombre_usuario = user_data.get("nombre").toString();
-			String temp_folder = CarpetaTecnica.saveFile(userID, doc);
 			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
 					postulacion.getCodigoPostulacion(), nombre_usuario);
 
 			log.debug(response_validate_data);
-
+//
 			if ("".equals(response_validate_data)) {
 				TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
 				TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
@@ -201,6 +202,7 @@ public class Concursos {
 			} else {
 				response_message = response_validate_data;
 			}
+			
 		} catch (JSONException e) {
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
@@ -216,8 +218,14 @@ public class Concursos {
 			System.out.println("recibirCarpetaTecnica:"+err.getMessage());
 			response_message = "No existen datos del usuario o datos técnicos guardados";
 			err.printStackTrace();
+		} catch (IOException e) {
+			correcto = false;
+			System.out.println("recibirCarpetaTecnica: "+ e.getMessage());
+			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
+			e.printStackTrace();
 		}
-
+		
+		CarpetaTecnica.deleteTempFolder(temp_folder);
 		RespuestaDTO respuesta = new RespuestaDTO();
 		String response_code = correcto ? "OK" : "NOK";
 

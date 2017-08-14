@@ -2,6 +2,7 @@ package cl.subtel.interop.cntv.calculotvd;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,26 +21,19 @@ import cl.subtel.interop.cntv.util.MongoDBUtils;
 
 public class CarpetaTecnica {
 
-	public static String saveFile(String userID, DocumentoDTO technical_folder) {
+	public static String saveFile(String userID, DocumentoDTO technical_folder) throws IOException {
 		String file_name = technical_folder.getNombreArchivo();
 		String file_directory = "/Documentos_tecnicos/" + userID + "/";
-		// String file_directory = "C:\\Users\\rinostroza\\Documents\\pruebas\\"
-		// + userID + "\\";
 
-		try {
-			InputStream ins = technical_folder.getArchivo().getInputStream();
-			File zipped_file_folder = new File(file_directory);
+		InputStream ins = technical_folder.getArchivo().getInputStream();
+		File zipped_file_folder = new File(file_directory);
 
-			zipped_file_folder.mkdirs();
-			OutputStream fos = new FileOutputStream(new File(file_directory + file_name));
-			IOUtils.copy(ins, fos);
-			fos.close();
-			ins.close();
-			unzip(file_directory + file_name, file_directory);
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
-		}
+		zipped_file_folder.mkdirs();
+		OutputStream fos = new FileOutputStream(new File(file_directory + file_name));
+		IOUtils.copy(ins, fos);
+		fos.close();
+		ins.close();
+		unzip(file_directory + file_name, file_directory);
 
 		return file_directory;
 	}
@@ -69,7 +63,7 @@ public class CarpetaTecnica {
 		return formatted_name;
 	}
 
-	public static void unzip(String zipFilePath, String destDir) {
+	public static void unzip(String zipFilePath, String destDir) throws IOException {
 		File dir = new File(destDir);
 
 		if (!dir.exists()) {
@@ -79,36 +73,33 @@ public class CarpetaTecnica {
 		FileInputStream fis;
 		byte[] buffer = new byte[1024];
 
-		try {
-			fis = new FileInputStream(zipFilePath);
-			ZipInputStream zis = new ZipInputStream(fis, Charset.forName("UTF-8"));
-			ZipEntry ze = zis.getNextEntry();
-			while (ze != null) {
-				String fileName = ze.getName();
-				System.out.println(fileName);
-//				byte[] ptext = fileName.getBytes("UTF-8");
-//				String file_name_chartset = new String(ptext, StandardCharsets.UTF_8);
-				File newFile = new File(destDir + File.separator + fileName);
-				// create directories for sub directories in zip
-				new File(newFile.getParent()).mkdirs();
-				FileOutputStream fos = new FileOutputStream(newFile);
-				int len;
-				while ((len = zis.read(buffer)) > 0) {
-					fos.write(buffer, 0, len);
-				}
-				fos.close();
-				zis.closeEntry();
-				ze = zis.getNextEntry();
-			}
-			zis.closeEntry();
-			zis.close();
-			fis.close();
+		fis = new FileInputStream(zipFilePath);
+		ZipInputStream zis = new ZipInputStream(fis, Charset.forName("UTF-8"));
+		ZipEntry ze = zis.getNextEntry();
 
-			File file = new File(zipFilePath);
-			file.delete();
-		} catch (IOException e) {
-			e.printStackTrace();
+		while (ze != null) {
+
+			String fileName = ze.getName();
+			File newFile = new File(destDir + File.separator + fileName);
+			new File(newFile.getParent()).mkdirs();
+			FileOutputStream fos = new FileOutputStream(newFile);
+			int len;
+
+			while ((len = zis.read(buffer)) > 0) {
+				fos.write(buffer, 0, len);
+			}
+
+			fos.close();
+			zis.closeEntry();
+			ze = zis.getNextEntry();
 		}
+
+		zis.closeEntry();
+		zis.close();
+		fis.close();
+
+		File file = new File(zipFilePath);
+		file.delete();
 
 	}
 
@@ -129,7 +120,7 @@ public class CarpetaTecnica {
 					DatosElemento datos_elemento = DatosElemento.createObjectElementoDatos(0L, datos_sist_principal);
 					validate_message = datos_elemento.validateData();
 				} catch (JSONException e) {
-					System.out.println("error validateDataTecnica: "+ e.getMessage());
+					System.out.println("error validateDataTecnica: " + e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -140,18 +131,21 @@ public class CarpetaTecnica {
 
 	public static void deleteTempFolder(String temp_folder) {
 		System.out.println("Borrando carpeta");
-		try {
-			File directory = new File(temp_folder);
 
-			if (directory.exists()) {
-				File files[] = directory.listFiles();
-				for (File current_file : files) {
-					current_file.delete();
+		if (!"".equals(temp_folder)) {
+			try {
+				File directory = new File(temp_folder);
+
+				if (directory.exists()) {
+					File files[] = directory.listFiles();
+					for (File current_file : files) {
+						current_file.delete();
+					}
+					directory.delete();
 				}
-				directory.delete();
+			} catch (Exception ex) {
+				ex.printStackTrace();
 			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
 		}
 	}
 }

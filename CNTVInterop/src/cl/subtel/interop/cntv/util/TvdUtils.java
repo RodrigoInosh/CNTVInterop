@@ -182,12 +182,14 @@ public class TvdUtils {
 
 	public static void insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
 			Logger log) throws SQLException, JSONException {
+		
 		System.out.println("insertDocumentDataToMatriz");
+		
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
+		int files_count = files_list.length;
 		String user_name = user_data.get("nombre").toString();
 		String nombre_archivo = "";
-		int files_count = files_list.length;
 
 		Long num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
 		Long numero_solicitud = OracleDBUtils.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
@@ -215,7 +217,7 @@ public class TvdUtils {
 					OracleDBUtils.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
 				}
 			}
-			CarpetaTecnica.deleteTempFolder(temp_folder);
+
 		}
 	}
 
