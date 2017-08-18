@@ -187,11 +187,12 @@ public class Concursos {
 			temp_folder = CarpetaTecnica.saveFile(userID, doc);
 			
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
+			System.out.println("rut empredsa: "+rut_empresa);
 			String nombre_usuario = user_data.get("nombre").toString();
 			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
 					postulacion.getCodigoPostulacion(), nombre_usuario);
 
-			log.debug(response_validate_data);
+			log.debug("Data Tecnica validate: "+response_validate_data);
 //
 			if ("".equals(response_validate_data)) {
 				TvdUtils.validateExisteCliente(user_data, rut_empresa, log);

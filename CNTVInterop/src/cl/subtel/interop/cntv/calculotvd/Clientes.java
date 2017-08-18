@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import cl.subtel.interop.cntv.util.OracleDBUtils;
+import cl.subtel.interop.cntv.util.DBOracleUtils;
 
 public class Clientes {
 
@@ -92,7 +92,7 @@ public class Clientes {
 
 	public static void insertDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
 
-		Connection db_connection = OracleDBUtils.connect();
+		Connection db_connection = DBOracleUtils.connect();
 		PreparedStatement stmt_insert_cliente = null;
 		PreparedStatement stmt_insert_data_empresa = null;
 
@@ -139,15 +139,15 @@ public class Clientes {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
-		OracleDBUtils.closeStatement(stmt_insert_cliente);
-		OracleDBUtils.closeStatement(stmt_insert_data_empresa);
-		OracleDBUtils.closeConnection(db_connection);
+		DBOracleUtils.closeStatement(stmt_insert_cliente);
+		DBOracleUtils.closeStatement(stmt_insert_data_empresa);
+		DBOracleUtils.closeConnection(db_connection);
 		log.debug("---DATOS CLIENTE Y EMPRESA INGRESADOS CORRECTAMENTE---");
 	}
 
 	public static void updateDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
 
-		Connection db_connection = OracleDBUtils.connect();
+		Connection db_connection = DBOracleUtils.connect();
 		PreparedStatement stmt_insert_cliente = null;
 		PreparedStatement stmt_insert_data_empresa = null;
 
@@ -194,9 +194,9 @@ public class Clientes {
 			log.error(e.getMessage());
 			e.printStackTrace();
 		}
-		OracleDBUtils.closeStatement(stmt_insert_cliente);
-		OracleDBUtils.closeStatement(stmt_insert_data_empresa);
-		OracleDBUtils.closeConnection(db_connection);
+		DBOracleUtils.closeStatement(stmt_insert_cliente);
+		DBOracleUtils.closeStatement(stmt_insert_data_empresa);
+		DBOracleUtils.closeConnection(db_connection);
 		
 	}
 }

@@ -3,7 +3,8 @@ package cl.subtel.interop.cntv.calculotvd;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import cl.subtel.interop.cntv.util.OracleDBUtils;
+import cl.subtel.interop.cntv.util.DBOracleDAO;
+import cl.subtel.interop.cntv.util.DBOracleUtils;
 
 public class DatosElemento {
 
@@ -505,14 +506,14 @@ public class DatosElemento {
 			String comuna = caract_tecnicas.get("comunaNamePTx").toString();
 			String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
 			String tipo_radiacion = getTipoRadiacion(calculos);
-			String tian_cod = OracleDBUtils.getTianCod(nombre_tipo_antena);
+			String tian_cod = DBOracleDAO.getTianCod(nombre_tipo_antena);
 			double latitud = getDoubleValue(calculos, "latitud");
 			double longitud = getDoubleValue(calculos, "longitud");
 			double polarizacion_perc_horizontal = getDoubleValue(caract_tecnicas, "perc_horizontal");
 			double polarizacion_perc_vertical = getDoubleValue(caract_tecnicas, "perc_vertical");
-			String polarizacion_cod = OracleDBUtils.getPolarizacionCod(polarizacion_perc_horizontal,
+			String polarizacion_cod = DBOracleDAO.getPolarizacionCod(polarizacion_perc_horizontal,
 					polarizacion_perc_vertical);
-			String tipo_emision_cod = OracleDBUtils.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
+			String tipo_emision_cod = DBOracleDAO.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
 			double potencia = getDoubleValue(calculos, "pPotencia");
 			String ganacia_max = caract_tecnicas.get("ganancia_max").toString();
 			String altura_antena_tx = calculos.get("pAlturaAntenaTx").toString();
@@ -533,7 +534,7 @@ public class DatosElemento {
 
 			Long cod_comuna = getLongValue(caract_tecnicas.get("comunaPTx").toString());//OracleDBUtils.getCodigoComuna(comuna);
 			Long cod_region = getLongValue(caract_tecnicas.get("regionPTx").toString());//OracleDBUtils.getCodigoRegion(cod_comuna);
-			Long cod_localidad = OracleDBUtils.getCodigoLocalidad(cod_comuna);
+			Long cod_localidad = DBOracleDAO.getCodigoLocalidad(cod_comuna);
 			
 			String perdidas_div_potencia = calculos.get("pDivisorPotencia").toString();
 			String ganancia_plano_horizontal = calculos.get("pGanancia").toString();

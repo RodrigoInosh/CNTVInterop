@@ -4,14 +4,15 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.File;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Calendar;
 
 import org.apache.logging.log4j.Logger;
 
-import cl.subtel.interop.cntv.calculotvd.CarpetaTecnica;
 import cl.subtel.interop.cntv.calculotvd.CarpetaTecnicaFiles;
 import cl.subtel.interop.cntv.calculotvd.Clientes;
+import cl.subtel.interop.cntv.calculotvd.DatosElemento;
 import cl.subtel.interop.cntv.calculotvd.DatosEmpresa;
 import cl.subtel.interop.cntv.calculotvd.Elemento;
 
@@ -55,55 +56,6 @@ public class TvdUtils {
 		}
 
 		return anthena_name;
-	}
-
-	public static Elemento createElementoSistPrincipal(JSONObject datos_sist_principal, String nombre_archivo,
-			String tipo_elemento) {
-
-		Elemento elemento_sist_principal = new Elemento();
-		String elm_nombre = nombre_archivo;
-		String rut_cliente = "";
-		int tel_codigo = OracleDBUtils.getTelCodByTipoElemento(tipo_elemento);
-
-		OracleDBUtils.connect();
-
-		try {
-			String datos = datos_sist_principal.getString("datos").replace("[", "").replace("]", "");
-			JSONObject datos_json = new JSONObject(datos);
-
-			rut_cliente = datos_json.getJSONObject("empresa").getString("rut");
-
-			elemento_sist_principal.setElm_nombre(elm_nombre);
-			elemento_sist_principal.setRut_cliente(rut_cliente);
-			elemento_sist_principal.setTel_codigo(tel_codigo);
-
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return elemento_sist_principal;
-	}
-
-	public static Elemento[] createElementosEstudios(JSONObject datos_sist_principal, String nombre_archivo) {
-		Elemento estudios[] = new Elemento[2];
-
-		try {
-			String datos = datos_sist_principal.getString("calculos").replace("[", "").replace("]", "");
-			JSONObject datos_json = new JSONObject(datos).getJSONObject("form_data");
-
-			if (!"".equals(datos_json.getJSONObject("estudio_principal").getString("comuna"))) {
-				estudios[0] = createElementoSistPrincipal(datos_sist_principal, nombre_archivo, "Estudio Principal");
-			}
-
-			if (!"".equals(datos_json.getJSONObject("estudio_alternativo").getString("comuna"))) {
-				estudios[1] = createElementoSistPrincipal(datos_sist_principal, nombre_archivo, "Estudio Alternativo");
-			}
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-
-		return estudios;
 	}
 
 	public static String getNamePolarizacionByType(double polarizacion_perc_horizontal,
@@ -168,7 +120,7 @@ public class TvdUtils {
 
 			DatosEmpresa empresa = TvdUtils.createDatosEmpresaFromJSON(cliente,
 					user_data.getJSONObject("representanteLegal"));
-			if (!OracleDBUtils.existeCliente(rut_empresa)) {
+			if (!DBOracleDAO.existeCliente(rut_empresa)) {
 				log.debug("Cliente no existe, agregando...");
 				Clientes.insertDataCliente(cliente, empresa, log);
 			} else {
@@ -180,44 +132,79 @@ public class TvdUtils {
 		}
 	}
 
-	public static void insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
+	public static void insertDocumentDataToMatriz(String temp_folder, String codigo_postulacion, JSONObject user_data,
 			Logger log) throws SQLException, JSONException {
-		
+
 		System.out.println("insertDocumentDataToMatriz");
-		
+
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
 		int files_count = files_list.length;
 		String user_name = user_data.get("nombre").toString();
 		String nombre_archivo = "";
 
-		Long num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
-		Long numero_solicitud = OracleDBUtils.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
+		Connection db_connection = DBOracleUtils.connect();
+		db_connection.setAutoCommit(false);
 
-		int count_doc = 0;
-		
-		if (numero_solicitud != 0L) {
-			for (int ix = 0; ix < files_count; ix++) {
-				nombre_archivo = files_list[ix].getName();
-				String unextension_file_name = nombre_archivo.split("\\.")[0];
-				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
+		Long num_ofi_parte = DBOracleDAO.getNumeroOP(user_data.getJSONObject("empresa"));
+		Long numero_solicitud = DBOracleDAO.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
 
-				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
-					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, user_name, stdo_codigo);
-				} else {
+		try {
+			if (numero_solicitud != 0L) {
+				for (int ix = 0; ix < files_count; ix++) {
+					nombre_archivo = files_list[ix].getName();
+					String unextension_file_name = nombre_archivo.split("\\.")[0];
+					String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
+
+					if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
+						JSONObject datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo,
+								codigo_postulacion, user_name);
+						Elemento elemento_principal = DBOracleDAO.createElementoSistPrincipal(datos_sist_principal,
+								nombre_archivo, "Planta Transmisora");
+						Elemento estudios[] = DBOracleDAO.createElementosEstudios(datos_sist_principal, nombre_archivo);
+
+						// Insertar Elemento Sistema Principal en tabla BDC_ELEMENTOS
+						Long inserted_elm_codigo = DBOracleDAO.insertElemento(elemento_principal, datos_sist_principal,
+								true, numero_solicitud, db_connection);
+
+						// Una vez creado el Elemento se asocia a éste un documento en la tabla
+						// BDC_DOCUMENTOS
+						Long doc_codigo = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo, db_connection);
+						DatosElemento elemento_datos = DatosElemento.createObjectElementoDatos(inserted_elm_codigo,
+								datos_sist_principal);
+						DBOracleDAO.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos,
+								db_connection);
+
+						// Si el sistema principal tiene más de un estudio (Estudios alternativos) se
+						// guarda sin la información sin crear un documento
+						int idx_loop = 0;
+						int cant_elementos_estudios = estudios.length;
+						while (idx_loop < cant_elementos_estudios) {
+							if (estudios[idx_loop] != null) {
+								DBOracleDAO.insertElemento(estudios[idx_loop], datos_sist_principal, false,
+										numero_solicitud, db_connection);
+							}
+							idx_loop++;
+						}
+					} else {
+						if (!"".equals(stdo_codigo)) {
+							Long cod_documento = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo, db_connection);
+						}
+					}
+
+					String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
+					System.out.println("Doc path:" + doc_path);
 					if (!"".equals(stdo_codigo)) {
-						Long cod_documento = OracleDBUtils.createBDCDocumento(numero_solicitud, stdo_codigo);
+						DBOracleDAO.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
 					}
 				}
-				
-				String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
-				System.out.println("Doc path:"+ doc_path);
-				if (!"".equals(stdo_codigo)) {
-					count_doc++;
-					OracleDBUtils.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
-				}
-			}
 
+			}
+			db_connection.commit();
+		} catch (Exception err) {
+			db_connection.rollback();
+		} finally {
+			DBOracleUtils.closeConnection(db_connection);
 		}
 	}
 

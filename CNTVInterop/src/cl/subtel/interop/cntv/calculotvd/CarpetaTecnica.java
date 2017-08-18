@@ -24,7 +24,7 @@ public class CarpetaTecnica {
 	public static String saveFile(String userID, DocumentoDTO technical_folder) throws IOException {
 		String file_name = technical_folder.getNombreArchivo();
 		String file_directory = "/Documentos_tecnicos/" + userID + "/";
-
+		System.out.println("f1: "+file_directory);
 		InputStream ins = technical_folder.getArchivo().getInputStream();
 		File zipped_file_folder = new File(file_directory);
 
@@ -34,7 +34,7 @@ public class CarpetaTecnica {
 		fos.close();
 		ins.close();
 		unzip(file_directory + file_name, file_directory);
-
+		System.out.println(file_directory);
 		return file_directory;
 	}
 
@@ -80,6 +80,7 @@ public class CarpetaTecnica {
 		while (ze != null) {
 
 			String fileName = ze.getName();
+			System.out.println("File name: "+ fileName);
 			File newFile = new File(destDir + File.separator + fileName);
 			new File(newFile.getParent()).mkdirs();
 			FileOutputStream fos = new FileOutputStream(newFile);
