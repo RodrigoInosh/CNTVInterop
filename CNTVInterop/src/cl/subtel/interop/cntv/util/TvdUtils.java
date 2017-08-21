@@ -114,22 +114,26 @@ public class TvdUtils {
 		return empresa;
 	}
 
-	public static void validateExisteCliente(JSONObject user_data, String rut_empresa, Logger log) {
+	public static boolean validateExisteCliente(JSONObject user_data, String rut_empresa, Logger log) {
+		
+		boolean inserted_ok = false;
 		try {
 			Clientes cliente = TvdUtils.createClienteFromJSON(user_data.getJSONObject("empresa"));
-
 			DatosEmpresa empresa = TvdUtils.createDatosEmpresaFromJSON(cliente,
 					user_data.getJSONObject("representanteLegal"));
+			
 			if (!DBOracleDAO.existeCliente(rut_empresa)) {
 				log.debug("Cliente no existe, agregando...");
-				Clientes.insertDataCliente(cliente, empresa, log);
+				inserted_ok = Clientes.insertDataCliente(cliente, empresa, log);
 			} else {
 				log.debug("Cliente existe, actualizando...");
-				Clientes.updateDataCliente(cliente, empresa, log);
+				inserted_ok = Clientes.updateDataCliente(cliente, empresa, log);
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
+		
+		return inserted_ok;
 	}
 
 	public static void insertDocumentDataToMatriz(String temp_folder, String codigo_postulacion, JSONObject user_data,

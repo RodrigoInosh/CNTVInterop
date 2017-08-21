@@ -90,11 +90,12 @@ public class Clientes {
 		return TIPO_PERSONALIDAD;
 	}
 
-	public static void insertDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
+	public static boolean insertDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
 
 		Connection db_connection = DBOracleUtils.connect();
 		PreparedStatement stmt_insert_cliente = null;
 		PreparedStatement stmt_insert_data_empresa = null;
+		boolean inserted_ok = false;
 
 		try {
 			db_connection.setAutoCommit(false);
@@ -112,7 +113,7 @@ public class Clientes {
 			stmt_insert_cliente.setString(7, data_cliente.getAlias());
 			stmt_insert_cliente.setString(8, data_cliente.getDireccion());
 
-			stmt_insert_cliente.executeUpdate();
+			// stmt_insert_cliente.executeUpdate();
 
 			stmt_insert_data_empresa = db_connection.prepareStatement(
 					"INSERT INTO BDC_SUBTEL.DATOS_EMPRESAS (CLI_RUT_CLIENTE, FONO1, FONO2, ALIAS, EMAIL, FECHA_INGRESO, NOMBRE_CONTACTO, RUT_CONTACTO) "
@@ -126,9 +127,10 @@ public class Clientes {
 			stmt_insert_data_empresa.setString(6, datos_empresa.getNombre_contacto());
 			stmt_insert_data_empresa.setString(7, datos_empresa.getRut_contacto());
 
-			stmt_insert_data_empresa.executeUpdate();
+			// stmt_insert_data_empresa.executeUpdate();
 
 			db_connection.getAutoCommit();
+			inserted_ok = true;
 		} catch (SQLException e) {
 			try {
 				db_connection.rollback();
@@ -138,18 +140,22 @@ public class Clientes {
 			}
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			DBOracleUtils.closeStatement(stmt_insert_cliente);
+			DBOracleUtils.closeStatement(stmt_insert_data_empresa);
+			DBOracleUtils.closeConnection(db_connection);
 		}
-		DBOracleUtils.closeStatement(stmt_insert_cliente);
-		DBOracleUtils.closeStatement(stmt_insert_data_empresa);
-		DBOracleUtils.closeConnection(db_connection);
+
 		log.debug("---DATOS CLIENTE Y EMPRESA INGRESADOS CORRECTAMENTE---");
+		return inserted_ok;
 	}
 
-	public static void updateDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
+	public static boolean updateDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
 
 		Connection db_connection = DBOracleUtils.connect();
 		PreparedStatement stmt_insert_cliente = null;
 		PreparedStatement stmt_insert_data_empresa = null;
+		boolean inserted_ok = false;
 
 		try {
 			db_connection.setAutoCommit(false);
@@ -167,7 +173,7 @@ public class Clientes {
 			stmt_insert_cliente.setString(7, data_cliente.getDireccion());
 			stmt_insert_cliente.setLong(8, data_cliente.getRut_cliente());
 
-			stmt_insert_cliente.executeUpdate();
+			// stmt_insert_cliente.executeUpdate();
 
 			stmt_insert_data_empresa = db_connection.prepareStatement(
 					"UPDATE BDC_SUBTEL.DATOS_EMPRESAS SET FONO1 = ?, FONO2 = ?, ALIAS = ?, EMAIL = ?, FECHA_MODIFICA = SYSDATE, NOMBRE_CONTACTO = ?, RUT_CONTACTO = ? WHERE CLI_RUT_CLIENTE = ?");
@@ -180,8 +186,9 @@ public class Clientes {
 			stmt_insert_data_empresa.setString(6, datos_empresa.getRut_contacto());
 			stmt_insert_data_empresa.setLong(7, data_cliente.getRut_cliente());
 
-			stmt_insert_data_empresa.executeUpdate();
+			// stmt_insert_data_empresa.executeUpdate();
 
+			inserted_ok = true;
 			db_connection.getAutoCommit();
 			log.debug("---DATOS CLIENTE Y EMPRESA ACTUALIZADOS CORRECTAMENTE---");
 		} catch (SQLException e) {
@@ -193,10 +200,12 @@ public class Clientes {
 			}
 			log.error(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			DBOracleUtils.closeStatement(stmt_insert_cliente);
+			DBOracleUtils.closeStatement(stmt_insert_data_empresa);
+			DBOracleUtils.closeConnection(db_connection);
 		}
-		DBOracleUtils.closeStatement(stmt_insert_cliente);
-		DBOracleUtils.closeStatement(stmt_insert_data_empresa);
-		DBOracleUtils.closeConnection(db_connection);
-		
+		log.debug("---DATOS CLIENTE Y EMPRESA ACTUALIZADOS CORRECTAMENTE---");
+		return inserted_ok;
 	}
 }

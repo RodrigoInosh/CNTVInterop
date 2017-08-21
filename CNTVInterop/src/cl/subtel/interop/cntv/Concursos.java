@@ -170,8 +170,9 @@ public class Concursos {
 		log.info("** recibirCarpetaTecnica ha sido invocado **");
 
 		boolean correcto = false;
+		boolean client_data_validated = false;
 		Gson gson = new Gson();
-//		log.debug(gson.toJson(postulacion));
+		// log.debug(gson.toJson(postulacion));
 
 		String temp_folder = "";
 		String response_message = "";
@@ -185,47 +186,51 @@ public class Concursos {
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
 			temp_folder = CarpetaTecnica.saveFile(userID, doc);
-			
+
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
-			System.out.println("rut empredsa: "+rut_empresa);
+			System.out.println("rut empredsa: " + rut_empresa);
 			String nombre_usuario = user_data.get("nombre").toString();
+
+			client_data_validated = TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
 			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
 					postulacion.getCodigoPostulacion(), nombre_usuario);
 
-			log.debug("Data Tecnica validate: "+response_validate_data);
-//
-			if ("".equals(response_validate_data)) {
-				TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
+			log.debug("Data Tecnica validate: " + response_validate_data);
+			
+			if (client_data_validated && "".equals(response_validate_data)) {
+
 				TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
 
 				response_message = "Se recibio la carpeta tecnica";
 				correcto = true;
+			} else if (!client_data_validated) {
+				response_message = "Error validando cliente";
 			} else {
 				response_message = response_validate_data;
 			}
-			
+
 		} catch (JSONException e) {
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
-			System.out.println("recibirCarpetaTecnica:"+e.getMessage());
+			System.out.println("recibirCarpetaTecnica:" + e.getMessage());
 			e.printStackTrace();
 		} catch (SQLException e) {
 			correcto = false;
-			System.out.println("recibirCarpetaTecnica:"+e.getMessage());
+			System.out.println("recibirCarpetaTecnica:" + e.getMessage());
 			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
 			e.printStackTrace();
 		} catch (NullPointerException err) {
 			correcto = false;
-			System.out.println("recibirCarpetaTecnica:"+err.getMessage());
+			System.out.println("recibirCarpetaTecnica:" + err.getMessage());
 			response_message = "No existen datos del usuario o datos técnicos guardados";
 			err.printStackTrace();
 		} catch (IOException e) {
 			correcto = false;
-			System.out.println("recibirCarpetaTecnica: "+ e.getMessage());
+			System.out.println("recibirCarpetaTecnica: " + e.getMessage());
 			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
 			e.printStackTrace();
 		}
-		
+
 		CarpetaTecnica.deleteTempFolder(temp_folder);
 		RespuestaDTO respuesta = new RespuestaDTO();
 		String response_code = correcto ? "OK" : "NOK";
