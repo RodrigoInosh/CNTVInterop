@@ -231,7 +231,7 @@ public class DBOracleDAO {
 			insert_numero_op_stmt.executeUpdate();
 			System.out.println("OP: " + numero_op);
 			String query_evento_op = "INSERT INTO GABINETE.OP_EVENTOS_ING (ID_EVENTO_ING, NRO_OP_ING, FECHA_OP_ING, ESTADO, DESTINO, PLAZO, GLOSA, VIGENCIA, FECHA_CREACION, "
-					+ "USUARIO_CREACION) VALUES (?, ?, SYSDATE, 1, 'CON', 0, 'Concurso TVD', 1, SYSDATE, 'ADM')";
+					+ "USUARIO_CREACION) VALUES (?, ?, TO_CHAR(SYSDATE, 'DD/MM/YY'), 1, 'CON', 0, 'Concurso TVD', 1, TO_CHAR(SYSDATE, 'DD/MM/YY'), 'ADM')";
 
 			boolean is_inserted_ok = false;
 			int intentos = 0;
