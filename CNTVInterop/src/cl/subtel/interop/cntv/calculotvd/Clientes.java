@@ -1,19 +1,11 @@
 package cl.subtel.interop.cntv.calculotvd;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import cl.subtel.interop.cntv.util.DBOracleUtils;
-
 public class Clientes {
 
-	private Long rut_cliente;
 	private static final int ACTIVIDAD_ECONOMICA = 3;
 	private static final String TIPO_PERSONALIDAD = "J"; // Jurídica
+
+	private Long rut_cliente;
 	private Long cod_comuna;
 	private String digito_verificador;
 	private String razon_social;
@@ -88,124 +80,5 @@ public class Clientes {
 
 	public static String getTipoPersonalidad() {
 		return TIPO_PERSONALIDAD;
-	}
-
-	public static boolean insertDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
-
-		Connection db_connection = DBOracleUtils.connect();
-		PreparedStatement stmt_insert_cliente = null;
-		PreparedStatement stmt_insert_data_empresa = null;
-		boolean inserted_ok = false;
-
-		try {
-			db_connection.setAutoCommit(false);
-
-			stmt_insert_cliente = db_connection.prepareStatement(
-					"INSERT INTO BDC_SUBTEL.CLIENTES (RUT_CLIENTE, ACT_COD_ACTIVIDAD_SII, TP_COD_TIPO_PERSONALIDAD, COD_COMUNA, DV, NOMBRE_RZ, ALIAS, DIRECCION, FECHA_INGRESO) "
-							+ "VALUES (?,?,?,?,?,?,?,?, SYSDATE)");
-
-			stmt_insert_cliente.setLong(1, data_cliente.getRut_cliente());
-			stmt_insert_cliente.setInt(2, Clientes.getActividadEconomica());
-			stmt_insert_cliente.setString(3, Clientes.getTipoPersonalidad());
-			stmt_insert_cliente.setLong(4, data_cliente.getCod_comuna());
-			stmt_insert_cliente.setString(5, data_cliente.getDigito_verificador());
-			stmt_insert_cliente.setString(6, data_cliente.getRazon_social());
-			stmt_insert_cliente.setString(7, data_cliente.getAlias());
-			stmt_insert_cliente.setString(8, data_cliente.getDireccion());
-
-			// stmt_insert_cliente.executeUpdate();
-
-			stmt_insert_data_empresa = db_connection.prepareStatement(
-					"INSERT INTO BDC_SUBTEL.DATOS_EMPRESAS (CLI_RUT_CLIENTE, FONO1, FONO2, ALIAS, EMAIL, FECHA_INGRESO, NOMBRE_CONTACTO, RUT_CONTACTO) "
-							+ "VALUES (?,?,?,?,?,SYSDATE,?,?)");
-
-			stmt_insert_data_empresa.setLong(1, data_cliente.getRut_cliente());
-			stmt_insert_data_empresa.setString(2, datos_empresa.getFono());
-			stmt_insert_data_empresa.setString(3, datos_empresa.getFono2());
-			stmt_insert_data_empresa.setString(4, datos_empresa.getAlias_cliente());
-			stmt_insert_data_empresa.setString(5, datos_empresa.getEmail());
-			stmt_insert_data_empresa.setString(6, datos_empresa.getNombre_contacto());
-			stmt_insert_data_empresa.setString(7, datos_empresa.getRut_contacto());
-
-			// stmt_insert_data_empresa.executeUpdate();
-
-			db_connection.getAutoCommit();
-			inserted_ok = true;
-		} catch (SQLException e) {
-			try {
-				db_connection.rollback();
-			} catch (SQLException e1) {
-				System.out.println(e1.getMessage());
-				e1.printStackTrace();
-			}
-			System.out.println(e.getMessage());
-			e.printStackTrace();
-		} finally {
-			DBOracleUtils.closeStatement(stmt_insert_cliente);
-			DBOracleUtils.closeStatement(stmt_insert_data_empresa);
-			DBOracleUtils.closeConnection(db_connection);
-		}
-
-		log.debug("---DATOS CLIENTE Y EMPRESA INGRESADOS CORRECTAMENTE---");
-		return inserted_ok;
-	}
-
-	public static boolean updateDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
-
-		Connection db_connection = DBOracleUtils.connect();
-		PreparedStatement stmt_insert_cliente = null;
-		PreparedStatement stmt_insert_data_empresa = null;
-		boolean inserted_ok = false;
-
-		try {
-			db_connection.setAutoCommit(false);
-
-			stmt_insert_cliente = db_connection.prepareStatement(
-					"UPDATE BDC_SUBTEL.CLIENTES SET ACT_COD_ACTIVIDAD_SII = ?, TP_COD_TIPO_PERSONALIDAD = ?, COD_COMUNA =?, DV = ?, NOMBRE_RZ = ?, ALIAS = ?, DIRECCION = ?, FECHA_MODIFICA = SYSDATE "
-							+ "WHERE RUT_CLIENTE = ?");
-
-			stmt_insert_cliente.setInt(1, Clientes.getActividadEconomica());
-			stmt_insert_cliente.setString(2, Clientes.getTipoPersonalidad());
-			stmt_insert_cliente.setLong(3, data_cliente.getCod_comuna());
-			stmt_insert_cliente.setString(4, data_cliente.getDigito_verificador());
-			stmt_insert_cliente.setString(5, data_cliente.getRazon_social());
-			stmt_insert_cliente.setString(6, data_cliente.getAlias());
-			stmt_insert_cliente.setString(7, data_cliente.getDireccion());
-			stmt_insert_cliente.setLong(8, data_cliente.getRut_cliente());
-
-			// stmt_insert_cliente.executeUpdate();
-
-			stmt_insert_data_empresa = db_connection.prepareStatement(
-					"UPDATE BDC_SUBTEL.DATOS_EMPRESAS SET FONO1 = ?, FONO2 = ?, ALIAS = ?, EMAIL = ?, FECHA_MODIFICA = SYSDATE, NOMBRE_CONTACTO = ?, RUT_CONTACTO = ? WHERE CLI_RUT_CLIENTE = ?");
-
-			stmt_insert_data_empresa.setString(1, datos_empresa.getFono());
-			stmt_insert_data_empresa.setString(2, datos_empresa.getFono2());
-			stmt_insert_data_empresa.setString(3, datos_empresa.getAlias_cliente());
-			stmt_insert_data_empresa.setString(4, datos_empresa.getEmail());
-			stmt_insert_data_empresa.setString(5, datos_empresa.getNombre_contacto());
-			stmt_insert_data_empresa.setString(6, datos_empresa.getRut_contacto());
-			stmt_insert_data_empresa.setLong(7, data_cliente.getRut_cliente());
-
-			// stmt_insert_data_empresa.executeUpdate();
-
-			inserted_ok = true;
-			db_connection.getAutoCommit();
-			log.debug("---DATOS CLIENTE Y EMPRESA ACTUALIZADOS CORRECTAMENTE---");
-		} catch (SQLException e) {
-			try {
-				db_connection.rollback();
-			} catch (SQLException e1) {
-				log.error(e1.getMessage());
-				e1.printStackTrace();
-			}
-			log.error(e.getMessage());
-			e.printStackTrace();
-		} finally {
-			DBOracleUtils.closeStatement(stmt_insert_cliente);
-			DBOracleUtils.closeStatement(stmt_insert_data_empresa);
-			DBOracleUtils.closeConnection(db_connection);
-		}
-		log.debug("---DATOS CLIENTE Y EMPRESA ACTUALIZADOS CORRECTAMENTE---");
-		return inserted_ok;
 	}
 }

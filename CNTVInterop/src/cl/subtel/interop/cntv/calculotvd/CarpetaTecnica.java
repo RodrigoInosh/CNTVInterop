@@ -2,29 +2,31 @@ package cl.subtel.interop.cntv.calculotvd;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.cxf.helpers.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import cl.subtel.interop.cntv.dto.DocumentoDTO;
-import cl.subtel.interop.cntv.util.MongoDBUtils;
+import cl.subtel.interop.cntv.util.DBMongoDAO;
 
 public class CarpetaTecnica {
+	
+	private static final Logger log = LogManager.getLogger();
 
 	public static String saveFile(String userID, DocumentoDTO technical_folder) throws IOException {
+		
 		String file_name = technical_folder.getNombreArchivo();
 		String file_directory = "/Documentos_tecnicos/" + userID + "/";
-		System.out.println("f1: "+file_directory);
 		InputStream ins = technical_folder.getArchivo().getInputStream();
 		File zipped_file_folder = new File(file_directory);
 
@@ -34,7 +36,8 @@ public class CarpetaTecnica {
 		fos.close();
 		ins.close();
 		unzip(file_directory + file_name, file_directory);
-		System.out.println(file_directory);
+		log.debug(file_directory);
+		
 		return file_directory;
 	}
 
@@ -80,7 +83,7 @@ public class CarpetaTecnica {
 		while (ze != null) {
 
 			String fileName = ze.getName();
-			System.out.println("File name: "+ fileName);
+			log.debug("File name: "+ fileName);
 			File newFile = new File(destDir + File.separator + fileName);
 			new File(newFile.getParent()).mkdirs();
 			FileOutputStream fos = new FileOutputStream(newFile);
@@ -116,12 +119,13 @@ public class CarpetaTecnica {
 			nombre_archivo = files_list[ix].getName();
 			if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
 				try {
-					datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion,
+					datos_sist_principal = DBMongoDAO.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion,
 							user_name);
-					DatosElemento datos_elemento = DatosElemento.createObjectElementoDatos(0L, datos_sist_principal);
+					
+					DatosElemento datos_elemento = new DatosElemento(0L, datos_sist_principal);
 					validate_message = datos_elemento.validateData();
 				} catch (JSONException e) {
-					System.out.println("error validateDataTecnica: " + e.getMessage());
+					log.error("error validateDataTecnica: " + e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -131,7 +135,7 @@ public class CarpetaTecnica {
 	}
 
 	public static void deleteTempFolder(String temp_folder) {
-		System.out.println("Borrando carpeta");
+		log.debug("Borrando carpeta");
 
 		if (!"".equals(temp_folder)) {
 			try {

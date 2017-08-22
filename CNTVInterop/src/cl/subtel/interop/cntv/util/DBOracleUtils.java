@@ -2,40 +2,58 @@ package cl.subtel.interop.cntv.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 
-import cl.subtel.interop.cntv.calculotvd.ArregloAntena;
-import cl.subtel.interop.cntv.calculotvd.DatosElemento;
-import cl.subtel.interop.cntv.calculotvd.Elemento;
 
 public class DBOracleUtils {
+	
+	private static final Logger log = LogManager.getLogger();
+	private static Connection db_connection;
+	private static String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
+	private static String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.50:1521:reclamos";
 
-	public static Connection connect() {
-		try {
-			Class.forName("oracle.jdbc.driver.OracleDriver");
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+	private DBOracleUtils() {
+	}
+	
+	public static Connection getSingletonInstance() {
+		if(db_connection == null) {
+			try {
+				Class.forName("oracle.jdbc.driver.OracleDriver");
+
+				db_connection = DriverManager.getConnection(db_url_develop);
+				db_connection.setAutoCommit(false);
+			} catch (SQLException e) {
+				log.debug("Connection Failed! Check output console");
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
-
-		Connection connection = null;
-
+		
+		return db_connection;
+	}
+	
+	public static void commit() {
 		try {
-			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
-			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.50:1521:reclamos";
-			connection = DriverManager.getConnection(db_url_develop);
+			log.error("Commiting changes");
+			db_connection.commit();
 		} catch (SQLException e) {
-			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
 		}
-
-		return connection;
+	}
+	
+	public static void rollback() {
+		try {
+			log.error("Rolling back");
+			db_connection.rollback();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void closeAll(Connection connection, Statement stmt, ResultSet res) {
@@ -66,6 +84,7 @@ public class DBOracleUtils {
 	}
 
 	public static void closeConnection(Connection connection) {
+		log.debug("Closing Oracle connection....");
 		if (connection != null) {
 			try {
 				connection.close();

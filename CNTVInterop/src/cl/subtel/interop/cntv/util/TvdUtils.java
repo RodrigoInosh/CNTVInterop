@@ -4,10 +4,10 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.File;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Calendar;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cl.subtel.interop.cntv.calculotvd.CarpetaTecnicaFiles;
@@ -18,45 +18,7 @@ import cl.subtel.interop.cntv.calculotvd.Elemento;
 
 public class TvdUtils {
 
-	public static String getIntensityByTypeService(String type_sist) {
-		String name_sist = "";
-
-		switch (type_sist) {
-		case "ZonaServicio":
-			name_sist = "48";
-			break;
-		case "ZonaCobertura":
-			name_sist = "40";
-			break;
-		case "ZonaUrbana":
-			name_sist = "66";
-			break;
-		default:
-			break;
-		}
-
-		return name_sist;
-	}
-
-	public static String getSistRadiantTypeByAlias(String anthena_alias) {
-		String anthena_name = "";
-
-		switch (anthena_alias) {
-		case "PTx0":
-			anthena_name = "sistRadiantePrinc";
-			break;
-		case "PTx1":
-			anthena_name = "sistRadianteAdic1";
-			break;
-		case "PTx2":
-			anthena_name = "sistRadianteAdic2";
-			break;
-		default:
-			break;
-		}
-
-		return anthena_name;
-	}
+	private static final Logger log = LogManager.getLogger();
 
 	public static String getNamePolarizacionByType(double polarizacion_perc_horizontal,
 			double polarizacion_perc_vertical) {
@@ -114,46 +76,53 @@ public class TvdUtils {
 		return empresa;
 	}
 
-	public static boolean validateExisteCliente(JSONObject user_data, String rut_empresa, Logger log) {
-		
+	public static boolean validateExisteCliente(JSONObject user_data, String rut_empresa) {
+
 		boolean inserted_ok = false;
+
+		Clientes cliente;
 		try {
-			Clientes cliente = TvdUtils.createClienteFromJSON(user_data.getJSONObject("empresa"));
+			cliente = TvdUtils.createClienteFromJSON(user_data.getJSONObject("empresa"));
+
 			DatosEmpresa empresa = TvdUtils.createDatosEmpresaFromJSON(cliente,
 					user_data.getJSONObject("representanteLegal"));
-			
+
 			if (!DBOracleDAO.existeCliente(rut_empresa)) {
-				log.debug("Cliente no existe, agregando...");
-				inserted_ok = Clientes.insertDataCliente(cliente, empresa, log);
+				log.info("Cliente no existe, agregando...");
+				inserted_ok = DBOracleDAO.insertDataCliente(cliente, empresa);
 			} else {
-				log.debug("Cliente existe, actualizando...");
-				inserted_ok = Clientes.updateDataCliente(cliente, empresa, log);
+				log.info("Cliente existe, actualizando...");
+				inserted_ok = DBOracleDAO.updateDataCliente(cliente, empresa);
 			}
+
 		} catch (JSONException e) {
+			log.error(e.getMessage());
 			e.printStackTrace();
 		}
-		
+
 		return inserted_ok;
 	}
 
-	public static void insertDocumentDataToMatriz(String temp_folder, String codigo_postulacion, JSONObject user_data,
-			Logger log) throws SQLException, JSONException {
+	public static void insertDocumentDataToMatriz(String temp_folder, String codigo_postulacion, JSONObject user_data)
+			throws SQLException, JSONException {
 
-		System.out.println("insertDocumentDataToMatriz");
-
+		log.info("---- INICIANDO INSERCIÓN DATA DOCUMENTOS A MATRIZ ----");
+//		JSONObject json_response = new JSONObject();
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
 		int files_count = files_list.length;
-		String user_name = user_data.get("nombre").toString();
-		String nombre_archivo = "";
 
-		Connection db_connection = DBOracleUtils.connect();
-		db_connection.setAutoCommit(false);
+//		Connection db_connection = DBOracleUtils.getSingletonInstance();
 
-		Long num_ofi_parte = DBOracleDAO.getNumeroOP(user_data.getJSONObject("empresa"));
-		Long numero_solicitud = DBOracleDAO.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
+//		try {
 
-		try {
+			String user_name = user_data.get("nombre").toString();
+			String nombre_archivo = "";
+
+			Long num_ofi_parte = DBOracleDAO.getNumeroOP(user_data.getJSONObject("empresa"));
+			Long numero_solicitud = DBOracleDAO.createSolitudConcesiones(num_ofi_parte,
+					user_data.getJSONObject("empresa"));
+
 			if (numero_solicitud != 0L) {
 				for (int ix = 0; ix < files_count; ix++) {
 					nombre_archivo = files_list[ix].getName();
@@ -161,7 +130,8 @@ public class TvdUtils {
 					String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
 
 					if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
-						JSONObject datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo,
+						log.debug("Zona Servicio Principal");
+						JSONObject datos_sist_principal = DBMongoDAO.getDatosTecnicosConcurso(nombre_archivo,
 								codigo_postulacion, user_name);
 						Elemento elemento_principal = DBOracleDAO.createElementoSistPrincipal(datos_sist_principal,
 								nombre_archivo, "Planta Transmisora");
@@ -169,47 +139,56 @@ public class TvdUtils {
 
 						// Insertar Elemento Sistema Principal en tabla BDC_ELEMENTOS
 						Long inserted_elm_codigo = DBOracleDAO.insertElemento(elemento_principal, datos_sist_principal,
-								true, numero_solicitud, db_connection);
+								true, numero_solicitud);
 
+						log.debug("bdc_elementos id: " + inserted_elm_codigo);
 						// Una vez creado el Elemento se asocia a éste un documento en la tabla
 						// BDC_DOCUMENTOS
-						Long doc_codigo = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo, db_connection);
-						DatosElemento elemento_datos = DatosElemento.createObjectElementoDatos(inserted_elm_codigo,
-								datos_sist_principal);
-						DBOracleDAO.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos,
-								db_connection);
+						Long doc_codigo = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
+
+						log.debug("bdc_documentos id:" + doc_codigo);
+						DatosElemento elemento_datos = new DatosElemento(inserted_elm_codigo, datos_sist_principal);
+						DBOracleDAO.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos);
 
 						// Si el sistema principal tiene más de un estudio (Estudios alternativos) se
 						// guarda sin la información sin crear un documento
-						int idx_loop = 0;
-						int cant_elementos_estudios = estudios.length;
-						while (idx_loop < cant_elementos_estudios) {
-							if (estudios[idx_loop] != null) {
-								DBOracleDAO.insertElemento(estudios[idx_loop], datos_sist_principal, false,
-										numero_solicitud, db_connection);
-							}
-							idx_loop++;
-						}
+						DBOracleDAO.insertElementosEstudios(estudios, datos_sist_principal, numero_solicitud);
+
 					} else {
 						if (!"".equals(stdo_codigo)) {
-							Long cod_documento = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo, db_connection);
+							Long cod_documento = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
+							log.debug(stdo_codigo + " - Doc codigo: " + cod_documento);
 						}
 					}
 
 					String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
-					System.out.println("Doc path:" + doc_path);
+					log.debug("Doc path:" + doc_path);
 					if (!"".equals(stdo_codigo)) {
 						DBOracleDAO.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
 					}
 				}
 
 			}
-			db_connection.commit();
-		} catch (Exception err) {
-			db_connection.rollback();
-		} finally {
-			DBOracleUtils.closeConnection(db_connection);
-		}
+
+			// json_response.put("msg", "Se recibio la carpeta tecnica");
+			// json_response.put("val", true);
+			// db_connection.rollback();
+//			db_connection.commit();
+//		} catch (Exception err) {
+//			// try {
+//			// json_response.put("msg", "Error en postulación, contactarse con:
+//			// mesa.ayuda@subtel.gob.cl");
+//			// json_response.put("val", true);
+//			log.error("Rolling back");
+//			db_connection.rollback();
+//			// } catch (SQLException | JSONException e) {
+//			// e.printStackTrace();
+//			// }
+//		} finally {
+//			DBOracleUtils.closeConnection(db_connection);
+//		}
+
+		// return json_response;
 	}
 
 	public static int getFormattedOPDate() {

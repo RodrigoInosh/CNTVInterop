@@ -1,12 +1,15 @@
 package cl.subtel.interop.cntv.calculotvd;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import cl.subtel.interop.cntv.util.DBOracleDAO;
-import cl.subtel.interop.cntv.util.DBOracleUtils;
 
 public class DatosElemento {
+
+	private static final Logger log = LogManager.getLogger();
 
 	private Long elm_codigo;
 	private final static String DTE_MOVIMIENTO = "A"; // A: Agrega, E: Elimina,
@@ -486,140 +489,135 @@ public class DatosElemento {
 		this.inicio_servicio = inicio_servicio;
 	}
 
-	public static DatosElemento createObjectElementoDatos(Long elemento_id, JSONObject datos_sist_principal) {
-		System.out.println("createObjectElementoDatos()");
-		DatosElemento datos_elemento_object = new DatosElemento();
+	public DatosElemento(Long elemento_id, JSONObject datos_sist_principal) throws JSONException {
+
+		log.info("--CREANDO DATOS ELEMENTOS--");
+
 		JSONObject calculos = null;
 		JSONObject caract_tecnicas = null;
 		JSONObject datos_concurso = null;
 		JSONObject est_principal = null;
 		JSONObject est_alternativo = null;
-		try {
-			calculos = new JSONObject(datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
-			caract_tecnicas = calculos.getJSONObject("form_data").getJSONObject("carac_tecnicas");
-			datos_concurso = calculos.getJSONObject("form_general_concurso");
-			est_principal = calculos.getJSONObject("form_data").getJSONObject("estudio_principal");
-			est_alternativo = calculos.getJSONObject("form_data").getJSONObject("estudio_alternativo");
 
-			String direccion = calculos.get("pDomicilio").toString();
-			String localidad = calculos.get("pLocalidad").toString();
-			String comuna = caract_tecnicas.get("comunaNamePTx").toString();
-			String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
-			String tipo_radiacion = getTipoRadiacion(calculos);
-			String tian_cod = DBOracleDAO.getTianCod(nombre_tipo_antena);
-			double latitud = getDoubleValue(calculos, "latitud");
-			double longitud = getDoubleValue(calculos, "longitud");
-			double polarizacion_perc_horizontal = getDoubleValue(caract_tecnicas, "perc_horizontal");
-			double polarizacion_perc_vertical = getDoubleValue(caract_tecnicas, "perc_vertical");
-			String polarizacion_cod = DBOracleDAO.getPolarizacionCod(polarizacion_perc_horizontal,
-					polarizacion_perc_vertical);
-			String tipo_emision_cod = DBOracleDAO.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
-			double potencia = getDoubleValue(calculos, "pPotencia");
-			String ganacia_max = caract_tecnicas.get("ganancia_max").toString();
-			String altura_antena_tx = calculos.get("pAlturaAntenaTx").toString();
-			String tilt = caract_tecnicas.get("angulo_tilt").toString();
-			String perdidas_cables = calculos.get("pPerdidaCablesConectores").toString();
-			String ubicacion_est_principal = getUbicacion(est_principal.get("domicilio").toString(),
-					est_principal.get("comuna").toString(), est_principal.get("region").toString());
-			String ubicacion_est_alternativo = getUbicacion(est_alternativo.get("domicilio").toString(),
-					est_alternativo.get("comuna").toString(), est_alternativo.get("region").toString());
-			String ubicacion_planta_tx = getUbicacion(caract_tecnicas.get("domicilioPtx").toString(),
-					caract_tecnicas.get("comunaPTx").toString(), caract_tecnicas.get("regionPTx").toString());
-			String intensidad_campo = calculos.get("pIntensidad").toString();
-			String inicio_obras = datos_concurso.getJSONObject("plazos").get("ini_obras").toString();
-			String fin_obras = datos_concurso.getJSONObject("plazos").get("fin_obras").toString();
-			String ini_servicio = datos_concurso.getJSONObject("plazos").get("ini_serv").toString();
-			String pot_max_tx = calculos.get("pPotencia").toString();
-			String cantidad_elem = caract_tecnicas.get("num_elem").toString();
+		calculos = new JSONObject(datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
+		caract_tecnicas = calculos.getJSONObject("form_data").getJSONObject("carac_tecnicas");
+		datos_concurso = calculos.getJSONObject("form_general_concurso");
+		est_principal = calculos.getJSONObject("form_data").getJSONObject("estudio_principal");
+		est_alternativo = calculos.getJSONObject("form_data").getJSONObject("estudio_alternativo");
 
-			Long cod_comuna = getLongValue(caract_tecnicas.get("comunaPTx").toString());//OracleDBUtils.getCodigoComuna(comuna);
-			Long cod_region = getLongValue(caract_tecnicas.get("regionPTx").toString());//OracleDBUtils.getCodigoRegion(cod_comuna);
-			Long cod_localidad = DBOracleDAO.getCodigoLocalidad(cod_comuna);
-			
-			String perdidas_div_potencia = calculos.get("pDivisorPotencia").toString();
-			String ganancia_plano_horizontal = calculos.get("pGanancia").toString();
-			double frecuencia = getDoubleValue(calculos, "pFrecuencia");
-			double otras_perdidas = getDoubleValue(calculos, "pOtrasPerdidas");
-			double latitud_grados = getDoubleValue(calculos, "pLatitudDegress");
-			double latitud_minutos = getDoubleValue(calculos, "pLatitudMinutes");
-			double latitud_segundos = getDoubleValue(calculos, "pLatitudSeconds");
-			double longitud_grados = getDoubleValue(calculos, "pLongitudDegress");
-			double longitud_minutos = getDoubleValue(calculos, "pLongitudMinutes");
-			double longitud_segundos = getDoubleValue(calculos, "pLongitudSeconds");
-			String zona_servicio = datos_sist_principal.get("identificador").toString();
-			
-			datos_elemento_object.setElm_codigo(elemento_id);
-			datos_elemento_object.setDte_direccion(direccion);
-			datos_elemento_object.setPunto_tx(direccion);
-			datos_elemento_object.setLocalidad_nombre(localidad);
-			datos_elemento_object.setComuna_nombre(comuna);
-			datos_elemento_object.setTian_cod(tian_cod);
-			datos_elemento_object.setLatitud_calculada(latitud);
-			datos_elemento_object.setLatitud_WGS84(latitud);
-			datos_elemento_object.setLongitud_calculada(longitud);
-			datos_elemento_object.setLongitud_WGS84(longitud);
-			datos_elemento_object.setPolarizacion(polarizacion_cod);
-			datos_elemento_object.setTipo_emision(tipo_emision_cod);
-			datos_elemento_object.setPotencia(potencia);
-			datos_elemento_object.setGanancia(ganacia_max);
-			datos_elemento_object.setAltura_antena_TX(altura_antena_tx);
-			datos_elemento_object.setTilt(tilt);
-			datos_elemento_object.setPerdidas_cable(perdidas_cables);
-			datos_elemento_object.setUbicacion_estudio_principal(ubicacion_est_principal);
-			datos_elemento_object.setUbicacion_estudio_alternativo(ubicacion_est_alternativo);
-			datos_elemento_object.setUbicacion_planta_transmisora(ubicacion_planta_tx);
-			datos_elemento_object.setIntensidad_campo(intensidad_campo);
-			datos_elemento_object.setFecha_inicio(inicio_obras);
-			datos_elemento_object.setFecha_termino(fin_obras);
-			datos_elemento_object.setInicio_servicio(ini_servicio);
-			datos_elemento_object.setPotencia_max_tx(pot_max_tx);
-			datos_elemento_object.setCantidad_elementos(cantidad_elem);
-			datos_elemento_object.setCod_localidad(cod_localidad);
-			datos_elemento_object.setCod_comuna(cod_comuna);
-			datos_elemento_object.setCod_region(cod_region);
-			datos_elemento_object.setPerdidas_div_potencia(perdidas_div_potencia);
-			datos_elemento_object.setGanancia_horizontal(ganancia_plano_horizontal);
-			datos_elemento_object.setFrecuencia(frecuencia);
-			datos_elemento_object.setOtras_perdidas(otras_perdidas);
-			datos_elemento_object.setDte_latitud_sur_gr(latitud_grados);
-			datos_elemento_object.setDte_latitud_sur_min(latitud_minutos);
-			datos_elemento_object.setDte_latitud_sur_sg(latitud_segundos);
-			datos_elemento_object.setDte_longitud_oeste_gr(longitud_grados);
-			datos_elemento_object.setDte_longitud_oeste_min(longitud_minutos);
-			datos_elemento_object.setDte_longitud_oeste_sg(longitud_segundos);
-			datos_elemento_object.setZona_servicio(zona_servicio);
-			datos_elemento_object.setTipo_radiacion(tipo_radiacion);
-			datos_elemento_object.setTipo_antena_nombre(nombre_tipo_antena);
+		String direccion = calculos.get("pDomicilio").toString();
+		String localidad = calculos.get("pLocalidad").toString();
+		String comuna = caract_tecnicas.get("comunaNamePTx").toString();
+		String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
+		String tipo_radiacion = getTipoRadiacion(calculos);
+		String tian_cod = DBOracleDAO.getTianCod(nombre_tipo_antena);
+		double latitud = getDoubleValue(calculos, "latitud");
+		double longitud = getDoubleValue(calculos, "longitud");
+		double polarizacion_perc_horizontal = getDoubleValue(caract_tecnicas, "perc_horizontal");
+		double polarizacion_perc_vertical = getDoubleValue(caract_tecnicas, "perc_vertical");
+		String polarizacion_cod = DBOracleDAO.getPolarizacionCod(polarizacion_perc_horizontal,
+				polarizacion_perc_vertical);
+		String tipo_emision_cod = DBOracleDAO.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
+		double potencia = getDoubleValue(calculos, "pPotencia");
+		String ganacia_max = caract_tecnicas.get("ganancia_max").toString();
+		String altura_antena_tx = calculos.get("pAlturaAntenaTx").toString();
+		String tilt = caract_tecnicas.get("angulo_tilt").toString();
+		String perdidas_cables = calculos.get("pPerdidaCablesConectores").toString();
+		String ubicacion_est_principal = getUbicacion(est_principal.get("domicilio").toString(),
+				est_principal.get("comuna").toString(), est_principal.get("region").toString());
+		String ubicacion_est_alternativo = getUbicacion(est_alternativo.get("domicilio").toString(),
+				est_alternativo.get("comuna").toString(), est_alternativo.get("region").toString());
+		String ubicacion_planta_tx = getUbicacion(caract_tecnicas.get("domicilioPtx").toString(),
+				caract_tecnicas.get("comunaPTx").toString(), caract_tecnicas.get("regionPTx").toString());
+		String intensidad_campo = calculos.get("pIntensidad").toString();
+		String inicio_obras = datos_concurso.getJSONObject("plazos").get("ini_obras").toString();
+		String fin_obras = datos_concurso.getJSONObject("plazos").get("fin_obras").toString();
+		String ini_servicio = datos_concurso.getJSONObject("plazos").get("ini_serv").toString();
+		String pot_max_tx = calculos.get("pPotencia").toString();
+		String cantidad_elem = caract_tecnicas.get("num_elem").toString();
 
-		} catch (JSONException e) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
-		}
+		Long cod_comuna = getLongValue(caract_tecnicas.get("comunaPTx").toString());
+		Long cod_region = getLongValue(caract_tecnicas.get("regionPTx").toString());
+		Long cod_localidad = DBOracleDAO.getCodigoLocalidad(cod_comuna);
 
-		return datos_elemento_object;
+		String perdidas_div_potencia = calculos.get("pDivisorPotencia").toString();
+		String ganancia_plano_horizontal = calculos.get("pGanancia").toString();
+		double frecuencia = getDoubleValue(calculos, "pFrecuencia");
+		double otras_perdidas = getDoubleValue(calculos, "pOtrasPerdidas");
+		double latitud_grados = getDoubleValue(calculos, "pLatitudDegress");
+		double latitud_minutos = getDoubleValue(calculos, "pLatitudMinutes");
+		double latitud_segundos = getDoubleValue(calculos, "pLatitudSeconds");
+		double longitud_grados = getDoubleValue(calculos, "pLongitudDegress");
+		double longitud_minutos = getDoubleValue(calculos, "pLongitudMinutes");
+		double longitud_segundos = getDoubleValue(calculos, "pLongitudSeconds");
+		String zona_servicio = datos_sist_principal.get("identificador").toString();
+
+		this.setElm_codigo(elemento_id);
+		this.setDte_direccion(direccion);
+		this.setPunto_tx(direccion);
+		this.setLocalidad_nombre(localidad);
+		this.setComuna_nombre(comuna);
+		this.setTian_cod(tian_cod);
+		this.setLatitud_calculada(latitud);
+		this.setLatitud_WGS84(latitud);
+		this.setLongitud_calculada(longitud);
+		this.setLongitud_WGS84(longitud);
+		this.setPolarizacion(polarizacion_cod);
+		this.setTipo_emision(tipo_emision_cod);
+		this.setPotencia(potencia);
+		this.setGanancia(ganacia_max);
+		this.setAltura_antena_TX(altura_antena_tx);
+		this.setTilt(tilt);
+		this.setPerdidas_cable(perdidas_cables);
+		this.setUbicacion_estudio_principal(ubicacion_est_principal);
+		this.setUbicacion_estudio_alternativo(ubicacion_est_alternativo);
+		this.setUbicacion_planta_transmisora(ubicacion_planta_tx);
+		this.setIntensidad_campo(intensidad_campo);
+		this.setFecha_inicio(inicio_obras);
+		this.setFecha_termino(fin_obras);
+		this.setInicio_servicio(ini_servicio);
+		this.setPotencia_max_tx(pot_max_tx);
+		this.setCantidad_elementos(cantidad_elem);
+		this.setCod_localidad(cod_localidad);
+		this.setCod_comuna(cod_comuna);
+		this.setCod_region(cod_region);
+		this.setPerdidas_div_potencia(perdidas_div_potencia);
+		this.setGanancia_horizontal(ganancia_plano_horizontal);
+		this.setFrecuencia(frecuencia);
+		this.setOtras_perdidas(otras_perdidas);
+		this.setDte_latitud_sur_gr(latitud_grados);
+		this.setDte_latitud_sur_min(latitud_minutos);
+		this.setDte_latitud_sur_sg(latitud_segundos);
+		this.setDte_longitud_oeste_gr(longitud_grados);
+		this.setDte_longitud_oeste_min(longitud_minutos);
+		this.setDte_longitud_oeste_sg(longitud_segundos);
+		this.setZona_servicio(zona_servicio);
+		this.setTipo_radiacion(tipo_radiacion);
+		this.setTipo_antena_nombre(nombre_tipo_antena);
+
 	}
-	
+
 	public static Long getLongValue(String value) {
 		Long cast_value = 0L;
 		try {
 			cast_value = Long.parseLong(value);
 		} catch (NumberFormatException e) {
-//			e.printStackTrace();
+			e.printStackTrace();
 		}
-		
+
 		return cast_value;
 	}
-	
+
 	public static double getDoubleValue(JSONObject object, String name_field) {
 		double value = 0;
 		try {
 			value = Double.parseDouble(object.get(name_field).toString());
 		} catch (NumberFormatException e) {
-//			e.printStackTrace();
+			e.printStackTrace();
 		} catch (JSONException e) {
-//			e.printStackTrace();
+			e.printStackTrace();
 		}
-		
+
 		return value;
 	}
 
@@ -672,7 +670,7 @@ public class DatosElemento {
 	}
 
 	public String validateData() {
-		System.out.println("validateData");
+		log.debug("validateData");
 		String message_response = "";
 
 		if ("".equals(comuna_nombre)) {
@@ -689,20 +687,20 @@ public class DatosElemento {
 
 		return message_response;
 	}
-	
+
 	public static String getTipoRadiacion(JSONObject calculos) {
 		String tipo_radiacion = "";
 		double min_perdida_lobulo = Integer.MAX_VALUE;
 		double max_perdida_lobulo = 0;
-		
+
 		try {
 			int radiales = Integer.parseInt(calculos.get("radiales").toString());
 			int grados = 360 / radiales;
-			
+
 			double perd_lobulo_actual;
-			
-			for(int ix = 0; ix < radiales; ix++){
-				perd_lobulo_actual = Double.parseDouble(calculos.get("M"+radiales+"PL"+(grados*ix)).toString());
+
+			for (int ix = 0; ix < radiales; ix++) {
+				perd_lobulo_actual = Double.parseDouble(calculos.get("M" + radiales + "PL" + (grados * ix)).toString());
 				min_perdida_lobulo = getMinValue(min_perdida_lobulo, perd_lobulo_actual);
 				max_perdida_lobulo = getMaxValue(max_perdida_lobulo, perd_lobulo_actual);
 			}
@@ -711,46 +709,46 @@ public class DatosElemento {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
+
 		double diferencia = max_perdida_lobulo - min_perdida_lobulo;
 		tipo_radiacion = getNameTipoRadiacion(diferencia);
-		
+
 		return tipo_radiacion;
 	}
-	
+
 	private static double getMinValue(double min_perdida_lobulo, double perd_lobulo_actual) {
 		double minimo = 0;
-		
-		if(min_perdida_lobulo > perd_lobulo_actual) {
+
+		if (min_perdida_lobulo > perd_lobulo_actual) {
 			minimo = perd_lobulo_actual;
 		} else {
 			minimo = min_perdida_lobulo;
 		}
-		
+
 		return minimo;
 	}
-	
+
 	private static double getMaxValue(double max_perdida_lobulo, double perd_lobulo_actual) {
 		double minimo = 0;
-		
-		if(max_perdida_lobulo < perd_lobulo_actual) {
+
+		if (max_perdida_lobulo < perd_lobulo_actual) {
 			minimo = perd_lobulo_actual;
 		} else {
 			minimo = max_perdida_lobulo;
 		}
-		
+
 		return minimo;
 	}
-	
+
 	private static String getNameTipoRadiacion(double diferencia) {
 		String tipo_radiacion = "";
-		
-		if(diferencia > 3) {
+
+		if (diferencia > 3) {
 			tipo_radiacion = "DIR";
 		} else {
 			tipo_radiacion = "OMN";
 		}
-		
+
 		return tipo_radiacion;
 	}
 }

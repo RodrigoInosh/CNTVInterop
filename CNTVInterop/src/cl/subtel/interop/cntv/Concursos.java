@@ -2,6 +2,7 @@ package cl.subtel.interop.cntv;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -34,7 +35,8 @@ import cl.subtel.interop.cntv.dto.RepresentanteLegalDTO;
 import cl.subtel.interop.cntv.dto.RespuestaDTO;
 import cl.subtel.interop.cntv.dto.UsuarioDTO;
 import cl.subtel.interop.cntv.util.FileProperties;
-import cl.subtel.interop.cntv.util.MongoDBUtils;
+import cl.subtel.interop.cntv.util.DBMongoDAO;
+import cl.subtel.interop.cntv.util.DBOracleUtils;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 @WebService(targetNamespace = "http://cntv.interop.subtel.cl/", portName = "ConcursosPort", serviceName = "ConcursosService")
@@ -171,7 +173,7 @@ public class Concursos {
 
 		boolean correcto = false;
 		boolean client_data_validated = false;
-		Gson gson = new Gson();
+//		Gson gson = new Gson();
 		// log.debug(gson.toJson(postulacion));
 
 		String temp_folder = "";
@@ -179,19 +181,20 @@ public class Concursos {
 		String userID = postulacion.getUserId();
 		BasicDBObject query_conditions = new BasicDBObject();
 		query_conditions.put("id", Integer.parseInt(userID));
-
+		
+		DBOracleUtils.getSingletonInstance();
 		try {
-			JSONObject user_data = MongoDBUtils.getData(query_conditions, "usuariosTVD");
+			JSONObject user_data = DBMongoDAO.getData(query_conditions, "usuariosTVD");
 
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
 			temp_folder = CarpetaTecnica.saveFile(userID, doc);
 
 			String rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
-			System.out.println("rut empredsa: " + rut_empresa);
+			log.debug("rut empredsa: " + rut_empresa);
 			String nombre_usuario = user_data.get("nombre").toString();
 
-			client_data_validated = TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
+			client_data_validated = TvdUtils.validateExisteCliente(user_data, rut_empresa);
 			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
 					postulacion.getCodigoPostulacion(), nombre_usuario);
 
@@ -199,35 +202,46 @@ public class Concursos {
 			
 			if (client_data_validated && "".equals(response_validate_data)) {
 
-				TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
-
+				TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data);
+				DBOracleUtils.commit();
+				
 				response_message = "Se recibio la carpeta tecnica";
 				correcto = true;
-			} else if (!client_data_validated) {
+			} else if (!client_data_validated)  {
+				DBOracleUtils.rollback();
 				response_message = "Error validando cliente";
 			} else {
+				DBOracleUtils.rollback();
 				response_message = response_validate_data;
 			}
 
 		} catch (JSONException e) {
+			log.debug("recibirCarpetaTecnica:" + e.getMessage());
+			
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
-			System.out.println("recibirCarpetaTecnica:" + e.getMessage());
+			DBOracleUtils.rollback();
 			e.printStackTrace();
 		} catch (SQLException e) {
+			log.debug("recibirCarpetaTecnica:" + e.getMessage());
+			
 			correcto = false;
-			System.out.println("recibirCarpetaTecnica:" + e.getMessage());
 			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
+			DBOracleUtils.rollback();
 			e.printStackTrace();
 		} catch (NullPointerException err) {
+			log.debug("recibirCarpetaTecnica:" + err.getMessage());
+			
 			correcto = false;
-			System.out.println("recibirCarpetaTecnica:" + err.getMessage());
 			response_message = "No existen datos del usuario o datos técnicos guardados";
+			DBOracleUtils.rollback();
 			err.printStackTrace();
 		} catch (IOException e) {
+			log.debug("recibirCarpetaTecnica: " + e.getMessage());
+			
 			correcto = false;
-			System.out.println("recibirCarpetaTecnica: " + e.getMessage());
 			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
+			DBOracleUtils.rollback();
 			e.printStackTrace();
 		}
 
