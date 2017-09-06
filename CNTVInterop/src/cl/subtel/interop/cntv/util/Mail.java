@@ -18,7 +18,7 @@ public class Mail {
 		ArrayList<String> destinataries = new ArrayList<String>();
 		destinataries.add("r.inostroza.inosh@gmail.com");
 		destinataries.add("rinostroza@subtel.gob.cl");
-		destinataries.add("vsanchez@subtel.gob.cl");
+//		destinataries.add("vsanchez@subtel.gob.cl");
 
 		Properties properties = System.getProperties();
 		properties.setProperty("mail.smtp.host", host);

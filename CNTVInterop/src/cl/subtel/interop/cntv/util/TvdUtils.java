@@ -103,80 +103,66 @@ public class TvdUtils {
 		return inserted_ok;
 	}
 
-	public static Long insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
-			Logger log) throws SQLException, JSONException {
-		
-		System.out.println("insertDocumentDataToMatriz");
-		
-	public static void insertDocumentDataToMatriz(String temp_folder, String codigo_postulacion, JSONObject user_data)
-			throws SQLException, JSONException {
+	public static Long insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data) throws SQLException, JSONException {
 
 		log.info("---- INICIANDO INSERCI�N DATA DOCUMENTOS A MATRIZ ----");
-//		JSONObject json_response = new JSONObject();
+
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
 		int files_count = files_list.length;
 
-//		Connection db_connection = DBOracleUtils.getSingletonInstance();
+		String user_name = user_data.get("nombre").toString();
+		String nombre_archivo = "";
 
-//		try {
+		Long num_ofi_parte = DBOracleDAO.getNumeroOP(user_data.getJSONObject("empresa"));
+		Long numero_solicitud = DBOracleDAO.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
 
-			String user_name = user_data.get("nombre").toString();
-			String nombre_archivo = "";
+		if (numero_solicitud != 0L) {
+			for (int ix = 0; ix < files_count; ix++) {
+				nombre_archivo = files_list[ix].getName();
+				String unextension_file_name = nombre_archivo.split("\\.")[0];
+				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
 
-			Long num_ofi_parte = DBOracleDAO.getNumeroOP(user_data.getJSONObject("empresa"));
-			Long numero_solicitud = DBOracleDAO.createSolitudConcesiones(num_ofi_parte,
-					user_data.getJSONObject("empresa"));
+				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
+					log.debug("Zona Servicio Principal");
+					JSONObject datos_sist_principal = DBMongoDAO.getDatosTecnicosConcurso(nombre_archivo,
+							postulation_code, user_name);
+					Elemento elemento_principal = DBOracleDAO.createElementoSistPrincipal(datos_sist_principal,
+							nombre_archivo, "Planta Transmisora");
+					Elemento estudios[] = DBOracleDAO.createElementosEstudios(datos_sist_principal, nombre_archivo);
 
-			if (numero_solicitud != 0L) {
-				for (int ix = 0; ix < files_count; ix++) {
-					nombre_archivo = files_list[ix].getName();
-					String unextension_file_name = nombre_archivo.split("\\.")[0];
-					String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
+					// Insertar Elemento Sistema Principal en tabla BDC_ELEMENTOS
+					Long inserted_elm_codigo = DBOracleDAO.insertElemento(elemento_principal, datos_sist_principal,
+							true, numero_solicitud);
 
-					if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
-						log.debug("Zona Servicio Principal");
-						JSONObject datos_sist_principal = DBMongoDAO.getDatosTecnicosConcurso(nombre_archivo,
-								codigo_postulacion, user_name);
-						Elemento elemento_principal = DBOracleDAO.createElementoSistPrincipal(datos_sist_principal,
-								nombre_archivo, "Planta Transmisora");
-						Elemento estudios[] = DBOracleDAO.createElementosEstudios(datos_sist_principal, nombre_archivo);
+					log.debug("bdc_elementos id: " + inserted_elm_codigo);
+					// Una vez creado el Elemento se asocia a �ste un documento en la tabla
+					// BDC_DOCUMENTOS
+					Long doc_codigo = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
 
-						// Insertar Elemento Sistema Principal en tabla BDC_ELEMENTOS
-						Long inserted_elm_codigo = DBOracleDAO.insertElemento(elemento_principal, datos_sist_principal,
-								true, numero_solicitud);
+					log.debug("bdc_documentos id:" + doc_codigo);
+					DatosElemento elemento_datos = new DatosElemento(inserted_elm_codigo, datos_sist_principal);
+					DBOracleDAO.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos);
 
-						log.debug("bdc_elementos id: " + inserted_elm_codigo);
-						// Una vez creado el Elemento se asocia a �ste un documento en la tabla
-						// BDC_DOCUMENTOS
-						Long doc_codigo = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
+					// Si el sistema principal tiene m�s de un estudio (Estudios alternativos) se
+					// guarda sin la informaci�n sin crear un documento
+					DBOracleDAO.insertElementosEstudios(estudios, datos_sist_principal, numero_solicitud);
 
-						log.debug("bdc_documentos id:" + doc_codigo);
-						DatosElemento elemento_datos = new DatosElemento(inserted_elm_codigo, datos_sist_principal);
-						DBOracleDAO.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos);
-
-						// Si el sistema principal tiene m�s de un estudio (Estudios alternativos) se
-						// guarda sin la informaci�n sin crear un documento
-						DBOracleDAO.insertElementosEstudios(estudios, datos_sist_principal, numero_solicitud);
-
-					} else {
-						if (!"".equals(stdo_codigo)) {
-							Long cod_documento = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
-							log.debug(stdo_codigo + " - Doc codigo: " + cod_documento);
-						}
-					}
-
-					String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
-					log.debug("Doc path:" + doc_path);
+				} else {
 					if (!"".equals(stdo_codigo)) {
-						DBOracleDAO.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
+						Long cod_documento = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
+						log.debug(stdo_codigo + " - Doc codigo: " + cod_documento);
 					}
 				}
 
+				String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
+				log.debug("Doc path:" + doc_path);
+				if (!"".equals(stdo_codigo)) {
+					DBOracleDAO.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
+				}
 			}
-
 		}
-		
+
 		return num_ofi_parte;
 	}
 
