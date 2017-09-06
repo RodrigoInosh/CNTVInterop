@@ -37,6 +37,8 @@ import cl.subtel.interop.cntv.dto.UsuarioDTO;
 import cl.subtel.interop.cntv.util.FileProperties;
 import cl.subtel.interop.cntv.util.DBMongoDAO;
 import cl.subtel.interop.cntv.util.DBOracleUtils;
+import cl.subtel.interop.cntv.util.Mail;
+import cl.subtel.interop.cntv.util.MongoDBUtils;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 @WebService(targetNamespace = "http://cntv.interop.subtel.cl/", portName = "ConcursosPort", serviceName = "ConcursosService")
@@ -172,13 +174,18 @@ public class Concursos {
 		log.info("** recibirCarpetaTecnica ha sido invocado **");
 
 		boolean correcto = false;
+		Gson gson = new Gson();
+//		log.debug(gson.toJson(postulacion));
+		Long numero_op = 0L;
 		boolean client_data_validated = false;
 //		Gson gson = new Gson();
 		// log.debug(gson.toJson(postulacion));
 
 		String temp_folder = "";
 		String response_message = "";
+		String rut_empresa = "";
 		String userID = postulacion.getUserId();
+		String codigoPostulacion = postulacion.getCodigoPostulacion();
 		BasicDBObject query_conditions = new BasicDBObject();
 		query_conditions.put("id", Integer.parseInt(userID));
 		
@@ -226,14 +233,14 @@ public class Concursos {
 			log.debug("recibirCarpetaTecnica:" + e.getMessage());
 			
 			correcto = false;
-			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
+			response_message = "Error en postulaciï¿½n, contactarse con: mesa.ayuda@subtel.gob.cl";
 			DBOracleUtils.rollback();
 			e.printStackTrace();
 		} catch (NullPointerException err) {
 			log.debug("recibirCarpetaTecnica:" + err.getMessage());
 			
 			correcto = false;
-			response_message = "No existen datos del usuario o datos técnicos guardados";
+			response_message = "No existen datos del usuario o datos tï¿½cnicos guardados";
 			DBOracleUtils.rollback();
 			err.printStackTrace();
 		} catch (IOException e) {
@@ -251,6 +258,8 @@ public class Concursos {
 
 		respuesta.setCodigo(response_code);
 		respuesta.setMensaje(response_message);
+		
+		Mail.sendMail("Postulaciï¿½n TVD, Codigo: " +codigoPostulacion, Mail.getBody(numero_op, "OK", "<b>User Id: </b>"+userID+ "<br>"+ "<b>Rut Empresa: </b>" +rut_empresa+ "<br><br>" +response_message));
 		log.debug("Cod:" + response_code);
 		log.debug("Msg:" + response_message);
 		log.info("** FIN recibirCarpetaTecnica **");

@@ -103,10 +103,15 @@ public class TvdUtils {
 		return inserted_ok;
 	}
 
+	public static Long insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
+			Logger log) throws SQLException, JSONException {
+		
+		System.out.println("insertDocumentDataToMatriz");
+		
 	public static void insertDocumentDataToMatriz(String temp_folder, String codigo_postulacion, JSONObject user_data)
 			throws SQLException, JSONException {
 
-		log.info("---- INICIANDO INSERCIÓN DATA DOCUMENTOS A MATRIZ ----");
+		log.info("---- INICIANDO INSERCIï¿½N DATA DOCUMENTOS A MATRIZ ----");
 //		JSONObject json_response = new JSONObject();
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
@@ -142,7 +147,7 @@ public class TvdUtils {
 								true, numero_solicitud);
 
 						log.debug("bdc_elementos id: " + inserted_elm_codigo);
-						// Una vez creado el Elemento se asocia a éste un documento en la tabla
+						// Una vez creado el Elemento se asocia a ï¿½ste un documento en la tabla
 						// BDC_DOCUMENTOS
 						Long doc_codigo = DBOracleDAO.insertIntoBDCDocumento(numero_solicitud, stdo_codigo);
 
@@ -150,8 +155,8 @@ public class TvdUtils {
 						DatosElemento elemento_datos = new DatosElemento(inserted_elm_codigo, datos_sist_principal);
 						DBOracleDAO.insertDatosElemento(doc_codigo, datos_sist_principal, elemento_datos);
 
-						// Si el sistema principal tiene más de un estudio (Estudios alternativos) se
-						// guarda sin la información sin crear un documento
+						// Si el sistema principal tiene mï¿½s de un estudio (Estudios alternativos) se
+						// guarda sin la informaciï¿½n sin crear un documento
 						DBOracleDAO.insertElementosEstudios(estudios, datos_sist_principal, numero_solicitud);
 
 					} else {
@@ -170,25 +175,9 @@ public class TvdUtils {
 
 			}
 
-			// json_response.put("msg", "Se recibio la carpeta tecnica");
-			// json_response.put("val", true);
-			// db_connection.rollback();
-//			db_connection.commit();
-//		} catch (Exception err) {
-//			// try {
-//			// json_response.put("msg", "Error en postulación, contactarse con:
-//			// mesa.ayuda@subtel.gob.cl");
-//			// json_response.put("val", true);
-//			log.error("Rolling back");
-//			db_connection.rollback();
-//			// } catch (SQLException | JSONException e) {
-//			// e.printStackTrace();
-//			// }
-//		} finally {
-//			DBOracleUtils.closeConnection(db_connection);
-//		}
-
-		// return json_response;
+		}
+		
+		return num_ofi_parte;
 	}
 
 	public static int getFormattedOPDate() {
