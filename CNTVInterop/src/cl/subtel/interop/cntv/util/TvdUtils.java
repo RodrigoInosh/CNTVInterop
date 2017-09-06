@@ -180,7 +180,7 @@ public class TvdUtils {
 		}
 	}
 
-	public static void insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
+	public static Long insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
 			Logger log) throws SQLException, JSONException {
 		
 		System.out.println("insertDocumentDataToMatriz");
@@ -219,6 +219,8 @@ public class TvdUtils {
 			}
 
 		}
+		
+		return num_ofi_parte;
 	}
 
 	public static int getFormattedOPDate() {

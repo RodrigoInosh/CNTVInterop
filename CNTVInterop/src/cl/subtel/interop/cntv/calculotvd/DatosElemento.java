@@ -254,7 +254,7 @@ public class DatosElemento {
 	}
 
 	public String getPerdidas_cable() {
-		return perdidas_cable;
+		return perdidas_cable.replace(".", ",");
 	}
 
 	public void setPerdidas_cable(String perdidas_cable) {
@@ -350,7 +350,7 @@ public class DatosElemento {
 	}
 
 	public String getPerdidas_div_potencia() {
-		return perdidas_div_potencia;
+		return perdidas_div_potencia.replace(".", ",");
 	}
 
 	public void setPerdidas_div_potencia(String perdidas_div_potencia) {
