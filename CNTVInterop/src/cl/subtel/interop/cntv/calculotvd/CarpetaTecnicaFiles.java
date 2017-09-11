@@ -279,17 +279,17 @@ public class CarpetaTecnicaFiles {
 		return stdo_cod;
 	}
 
-	public static void test_upload(String temp_folder, String user_name) {
-		File temp_technical_folder = new File(temp_folder);
-		File[] files_list = temp_technical_folder.listFiles();
-		String nombre_archivo = "";
-		int files_count = files_list.length;
-
-		for (File file : files_list) {
-			nombre_archivo = file.getName();
-			String doc_path = CarpetaTecnicaFiles.uploadFile(file, nombre_archivo, 12L);
-		}
-	}
+//	public static void test_upload(String temp_folder, String user_name) {
+//		File temp_technical_folder = new File(temp_folder);
+//		File[] files_list = temp_technical_folder.listFiles();
+//		String nombre_archivo = "";
+//		int files_count = files_list.length;
+//
+//		for (File file : files_list) {
+//			nombre_archivo = file.getName();
+//			String doc_path = CarpetaTecnicaFiles.uploadFile(file, nombre_archivo, 12L);
+//		}
+//	}
 
 	public static void test_create_folder(Long numero_of_parte) {
 		String year = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));

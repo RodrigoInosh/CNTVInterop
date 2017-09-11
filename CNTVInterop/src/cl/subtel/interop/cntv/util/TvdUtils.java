@@ -188,7 +188,7 @@ public class TvdUtils {
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
 		int files_count = files_list.length;
-		String user_name = user_data.get("nombre").toString();
+		int userID = user_data.getInt("id");
 		String nombre_archivo = "";
 
 		Long num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
@@ -203,7 +203,7 @@ public class TvdUtils {
 				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
 
 				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
-					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, user_name, stdo_codigo);
+					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, userID, stdo_codigo);
 				} else {
 					if (!"".equals(stdo_codigo)) {
 						Long cod_documento = OracleDBUtils.createBDCDocumento(numero_solicitud, stdo_codigo);

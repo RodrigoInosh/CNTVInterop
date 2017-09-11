@@ -2,13 +2,11 @@ package cl.subtel.interop.cntv.calculotvd;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -103,7 +101,7 @@ public class CarpetaTecnica {
 
 	}
 
-	public static String validateDataTecnica(String temp_folder, String codigo_postulacion, String user_name) {
+	public static String validateDataTecnica(String temp_folder, String codigo_postulacion, int userID) {
 		String validate_message = "";
 		String nombre_archivo = "";
 		File temp_technical_folder = new File(temp_folder);
@@ -116,7 +114,7 @@ public class CarpetaTecnica {
 			if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
 				try {
 					datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion,
-							user_name);
+							userID);
 					DatosElemento datos_elemento = DatosElemento.createObjectElementoDatos(0L, datos_sist_principal);
 					validate_message = datos_elemento.validateData();
 				} catch (JSONException e) {

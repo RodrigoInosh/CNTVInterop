@@ -25,7 +25,6 @@ import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 
 import cl.subtel.interop.cntv.calculotvd.CarpetaTecnica;
-import cl.subtel.interop.cntv.calculotvd.DatosElemento;
 import cl.subtel.interop.cntv.dto.DocumentoDTO;
 import cl.subtel.interop.cntv.dto.EmpresaDTO;
 import cl.subtel.interop.cntv.dto.PaginaCalculoDTO;
@@ -190,9 +189,8 @@ public class Concursos {
 			temp_folder = CarpetaTecnica.saveFile(userID, doc);
 			
 			rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
-			String nombre_usuario = user_data.get("nombre").toString();
 			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
-					postulacion.getCodigoPostulacion(), nombre_usuario);
+					postulacion.getCodigoPostulacion(), Integer.parseInt(userID));
 
 			log.debug(response_validate_data);
 

@@ -84,9 +84,9 @@ public class Elemento {
 		return TEC_CODIGO;
 	}
 	
-	public static void insertarDatosSistPrincipal(String nombre_archivo, Long numero_solicitud, String codigo_postulacion, String user_name, String stdo_codigo) throws SQLException, JSONException {
+	public static void insertarDatosSistPrincipal(String nombre_archivo, Long numero_solicitud, String codigo_postulacion, int userID, String stdo_codigo) throws SQLException, JSONException {
 		
-		JSONObject datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion, user_name);
+		JSONObject datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion, userID);
 
 		Elemento elemento_principal = TvdUtils.createElementoSistPrincipal(datos_sist_principal, nombre_archivo, "Planta Transmisora");
 		Elemento estudios[] = TvdUtils.createElementosEstudios(datos_sist_principal, nombre_archivo);

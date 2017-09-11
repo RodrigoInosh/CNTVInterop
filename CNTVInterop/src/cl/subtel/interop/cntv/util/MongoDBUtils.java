@@ -36,7 +36,7 @@ public class MongoDBUtils {
 		return user_data;
 	}
 	
-	public static JSONObject getDatosTecnicosConcurso(String nombre_archivo, String codigo_postulacion, String user_name) throws JSONException {
+	public static JSONObject getDatosTecnicosConcurso(String nombre_archivo, String codigo_postulacion, int userID) throws JSONException {
 		String intensidad_campo = "", sist_radiante = "", identificador = "";
 		String splitted_file_name[] = null;
 		BasicDBObject whereQuery = new BasicDBObject();
@@ -51,7 +51,7 @@ public class MongoDBUtils {
 		whereQuery.put("definitivo", "1");
 		whereQuery.put("identificador", identificador);
 		whereQuery.put("codigo_postulacion", codigo_postulacion);
-		whereQuery.put("user", user_name);
+		whereQuery.put("datos.id", userID);
 		
 		JSONObject datos_sist_principal = MongoDBUtils.getData(whereQuery, "datosTecnicosCNTV");
 		
