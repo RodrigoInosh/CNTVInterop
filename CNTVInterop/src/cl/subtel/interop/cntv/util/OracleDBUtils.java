@@ -128,13 +128,15 @@ public class OracleDBUtils {
 		int tel_cod = 0;
 
 		Connection connection_oracledb = null;
-		Statement stmt_query_get_tel_cod = null;
+		PreparedStatement stmt_query_get_tel_cod = null;
 		ResultSet result_tel_cod_query = null;
+		String query = "select TEL_CODIGO from TIPO_ELEMENTO where TEL_NOMBRE = ?";
+		
 		try {
 			connection_oracledb = connect();
-			stmt_query_get_tel_cod = connection_oracledb.createStatement();
-			result_tel_cod_query = stmt_query_get_tel_cod
-					.executeQuery("select TEL_CODIGO from TIPO_ELEMENTO where TEL_NOMBRE = \'" + tipo_elemento + "\'");
+			stmt_query_get_tel_cod = connection_oracledb.prepareStatement(query);
+			stmt_query_get_tel_cod.setString(1, tipo_elemento);
+			result_tel_cod_query = stmt_query_get_tel_cod.executeQuery();
 
 			if (result_tel_cod_query.next()) {
 				tel_cod = result_tel_cod_query.getInt("TEL_CODIGO");
@@ -236,9 +238,9 @@ public class OracleDBUtils {
 			insert_numero_op_stmt.setInt(4, rut_empresa);
 			insert_numero_op_stmt.setInt(5, op_fecha_recep);
 			insert_numero_op_stmt.setString(6, nombre_empresa_remitente);
-			
+
 			insert_numero_op_stmt.executeUpdate();
-			System.out.println("OP: "+numero_op);
+			System.out.println("OP: " + numero_op);
 			String query_evento_op = "INSERT INTO GABINETE.OP_EVENTOS_ING (ID_EVENTO_ING, NRO_OP_ING, FECHA_OP_ING, ESTADO, DESTINO, PLAZO, GLOSA, VIGENCIA, FECHA_CREACION, "
 					+ "USUARIO_CREACION) VALUES (?, ?, TO_CHAR(SYSDATE, 'DD/MM/YY'), 1, 'CON', 0, 'Concurso TVD', 1, TO_CHAR(SYSDATE, 'DD/MM/YY'), 'ADM')";
 
@@ -257,7 +259,7 @@ public class OracleDBUtils {
 				} catch (SQLException err) {
 					System.out.println(err.getMessage());
 					closeStatement(insert_op_eventos);
-					if(err.getSQLState().equals("23000")) {
+					if (err.getSQLState().equals("23000")) {
 						is_inserted_ok = false;
 						continue;
 					} else {
@@ -265,7 +267,7 @@ public class OracleDBUtils {
 					}
 				}
 			}
-			System.out.println("numero intentos:"+intentos);
+			System.out.println("numero intentos:" + intentos);
 		} catch (SQLException e) {
 			numero_op = 0L;
 			e.printStackTrace();
@@ -484,7 +486,7 @@ public class OracleDBUtils {
 
 		boolean inserted_ok = false;
 		PreparedStatement stmt = null;
-		
+
 		try {
 			JSONObject calculos = new JSONObject(
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
@@ -577,7 +579,7 @@ public class OracleDBUtils {
 
 		boolean inserted_ok = false;
 		PreparedStatement stmt = null;
-		
+
 		try {
 			JSONObject form_data = new JSONObject(
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""))
@@ -743,7 +745,7 @@ public class OracleDBUtils {
 		} finally {
 			closeAll(db_connection, stmt, res);
 		}
-		
+
 		return existe;
 	}
 
@@ -850,7 +852,7 @@ public class OracleDBUtils {
 			closeConnection(db_connection);
 		}
 	}
-	
+
 	public static Long getSolicitudByPostulationCode(String codigoPostulacion) {
 		System.out.println(codigoPostulacion);
 		Long soli_numero_solicitud = 0L;
@@ -858,27 +860,27 @@ public class OracleDBUtils {
 		PreparedStatement stmt = null;
 		ResultSet result = null;
 		String query = "SELECT codigo_postulacion, numero_solicitud, numero_op FROM BDC_SOLICITUD_POSTULACION WHERE codigo_postulacion = ?";
-		
+
 		try {
 			db_connection = connect();
 			stmt = db_connection.prepareStatement(query);
 			stmt.setString(1, codigoPostulacion);
 
 			result = stmt.executeQuery();
-			
-			if(result.next()) {
+
+			if (result.next()) {
 				soli_numero_solicitud = result.getLong("numero_solicitud");
 			}
-			
+
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
 			closeAll(db_connection, stmt, result);
 		}
-		
+
 		return soli_numero_solicitud;
 	}
-	
+
 	public static JSONObject getUserData(String userID) throws JSONException {
 		BasicDBObject query_conditions = new BasicDBObject();
 		query_conditions.put("id", Integer.parseInt(userID));
