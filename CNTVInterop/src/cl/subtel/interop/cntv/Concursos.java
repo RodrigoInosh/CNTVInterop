@@ -2,8 +2,6 @@ package cl.subtel.interop.cntv;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.sql.SQLException;
-import java.util.List;
 import java.util.MissingResourceException;
 
 import javax.jws.WebMethod;
@@ -24,8 +22,6 @@ import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 
-import cl.subtel.interop.cntv.calculotvd.CarpetaTecnica;
-import cl.subtel.interop.cntv.dto.DocumentoDTO;
 import cl.subtel.interop.cntv.dto.EmpresaDTO;
 import cl.subtel.interop.cntv.dto.PaginaCalculoDTO;
 import cl.subtel.interop.cntv.dto.PostulacionDTO;
@@ -33,8 +29,7 @@ import cl.subtel.interop.cntv.dto.RepresentanteLegalDTO;
 import cl.subtel.interop.cntv.dto.RespuestaDTO;
 import cl.subtel.interop.cntv.dto.UsuarioDTO;
 import cl.subtel.interop.cntv.util.FileProperties;
-import cl.subtel.interop.cntv.util.Mail;
-import cl.subtel.interop.cntv.util.MongoDBUtils;
+import cl.subtel.interop.cntv.util.OracleDBUtils;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 @WebService(targetNamespace = "http://cntv.interop.subtel.cl/", portName = "ConcursosPort", serviceName = "ConcursosService")
@@ -169,74 +164,27 @@ public class Concursos {
 	public RespuestaDTO recibirCarpetaTecnica(@WebParam(name = "carpeta") PostulacionDTO postulacion) {
 		log.info("** recibirCarpetaTecnica ha sido invocado **");
 
-		boolean correcto = false;
-		Gson gson = new Gson();
-//		log.debug(gson.toJson(postulacion));
-		Long numero_op = 0L;
-		String temp_folder = "";
-		String response_message = "";
-		String rut_empresa = "";
 		String userID = postulacion.getUserId();
 		String codigoPostulacion = postulacion.getCodigoPostulacion();
-		BasicDBObject query_conditions = new BasicDBObject();
-		query_conditions.put("id", Integer.parseInt(userID));
+
+		JSONObject user_data = new JSONObject();
+		Long num_ofi_parte = 0L;
+		Long num_solicitud = 0L;
 
 		try {
-			JSONObject user_data = MongoDBUtils.getData(query_conditions, "usuariosTVD");
-
-			List<DocumentoDTO> lista = postulacion.getArchivos();
-			DocumentoDTO doc = lista.get(0);
-			temp_folder = CarpetaTecnica.saveFile(userID, doc);
-			
-			rut_empresa = user_data.getJSONObject("empresa").get("rut").toString();
-			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder,
-					postulacion.getCodigoPostulacion(), Integer.parseInt(userID));
-
-			log.debug(response_validate_data);
-
-			if ("".equals(response_validate_data)) {
-				TvdUtils.validateExisteCliente(user_data, rut_empresa, log);
-				numero_op = TvdUtils.insertDocumentDataToMatriz(temp_folder, postulacion.getCodigoPostulacion(), user_data, log);
-
-				response_message = "Se recibio la carpeta tecnica";
-				correcto = true;
-			} else {
-				response_message = response_validate_data;
-			}
-			
-		} catch (JSONException e) {
-			correcto = false;
-			response_message = "Datos tecnicos guardados incompletos";
-			log.error("recibirCarpetaTecnica:"+e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			correcto = false;
-			log.error("recibirCarpetaTecnica:"+e.getMessage());
-			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
-			e.printStackTrace();
+			user_data = OracleDBUtils.getUserData(userID);
+			num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
+			num_solicitud = OracleDBUtils.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
 		} catch (NullPointerException err) {
-			correcto = false;
-			log.error("recibirCarpetaTecnica:"+err.getMessage());
-			response_message = "No existen datos del usuario o datos técnicos guardados";
+			log.error("recibirCarpetaTecnica:" + err.getMessage());
 			err.printStackTrace();
-		} catch (IOException e) {
-			correcto = false;
-			log.error("recibirCarpetaTecnica: "+ e.getMessage());
-			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
+		} catch (JSONException e) {
+			log.error("recibirCarpetaTecnica:" + e.getMessage());
 			e.printStackTrace();
 		}
-		
-		CarpetaTecnica.deleteTempFolder(temp_folder);
-		RespuestaDTO respuesta = new RespuestaDTO();
-		String response_code = correcto ? "OK" : "NOK";
 
-		respuesta.setCodigo(response_code);
-		respuesta.setMensaje(response_message);
-		
-		Mail.sendMail("Postulación TVD, Codigo: " +codigoPostulacion, Mail.getBody(numero_op, "OK", "<b>User Id: </b>"+userID+ "<br>"+ "<b>Rut Empresa: </b>" +rut_empresa+ "<br><br>" +response_message));
-		log.debug("Cod:" + response_code);
-		log.debug("Msg:" + response_message);
-		log.info("** FIN recibirCarpetaTecnica **");
+		RespuestaDTO respuesta = TvdUtils.getDataCarpetaTecnica(postulacion, userID, num_solicitud, num_ofi_parte,
+				codigoPostulacion, user_data);
 		return respuesta;
 	}
 
@@ -245,8 +193,8 @@ public class Concursos {
 	public RespuestaDTO paginaCalculoTVD(@WebParam(name = "paginaCalculo") PaginaCalculoDTO paginaCalculo) {
 		log.info("** recibirCarpetaTecnica ha sido invocado **");
 
-		Gson gson = new Gson();
-		log.debug(gson.toJson(paginaCalculo));
+		// Gson gson = new Gson();
+		// log.debug(gson.toJson(paginaCalculo));
 
 		RespuestaDTO respuesta = new RespuestaDTO();
 

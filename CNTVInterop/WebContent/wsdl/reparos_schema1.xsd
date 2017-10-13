@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?><xs:schema xmlns:tns="http://cntv.interop.subtel.cl/" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="unqualified" targetNamespace="http://cntv.interop.subtel.cl/" version="1.0">
+<xs:element name="reparosCarpetaTecnica" type="tns:reparosCarpetaTecnica"/>
+<xs:element name="reparosCarpetaTecnicaResponse" type="tns:reparosCarpetaTecnicaResponse"/>
+<xs:complexType name="reparosCarpetaTecnica">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="arg0" type="tns:postulacionDTO"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="postulacionDTO">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="archivos" nillable="true" type="tns:documentoDTO"/>
+      <xs:element minOccurs="0" name="codigoPostulacion" type="xs:string"/>
+      <xs:element minOccurs="0" name="userId" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="documentoDTO">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="archivo" type="xs:base64Binary"/>
+      <xs:element minOccurs="0" name="checksum" type="xs:string"/>
+      <xs:element minOccurs="0" name="descripcionArchivo" type="xs:string"/>
+      <xs:element minOccurs="0" name="nombreArchivo" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="reparosCarpetaTecnicaResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:respuestaDTO"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="respuestaDTO">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="codigo" type="xs:string"/>
+      <xs:element minOccurs="0" name="mensaje" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

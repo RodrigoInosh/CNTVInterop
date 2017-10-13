@@ -10,6 +10,8 @@ import java.sql.Statement;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+import com.mongodb.BasicDBObject;
+
 import cl.subtel.interop.cntv.calculotvd.ArregloAntena;
 import cl.subtel.interop.cntv.calculotvd.DatosElemento;
 import cl.subtel.interop.cntv.calculotvd.Elemento;
@@ -31,7 +33,7 @@ public class OracleDBUtils {
 		try {
 			String db_url_develop = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.219:1521:dreclamo";
 			String db_url_production = "jdbc:oracle:thin:bdc_subtel/bdc@172.30.10.50:1521:reclamos";
-			connection = DriverManager.getConnection(db_url_production);
+			connection = DriverManager.getConnection(db_url_develop);
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
@@ -115,9 +117,10 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeAll(connection, stmt, res);
 		}
 
-		closeAll(connection, stmt, res);
 		return cod_value;
 	}
 
@@ -139,9 +142,10 @@ public class OracleDBUtils {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeAll(connection_oracledb, stmt_query_get_tel_cod, result_tel_cod_query);
 		}
 
-		closeAll(connection_oracledb, stmt_query_get_tel_cod, result_tel_cod_query);
 		return tel_cod;
 	}
 
@@ -180,10 +184,10 @@ public class OracleDBUtils {
 			e.printStackTrace();
 		} catch (JSONException e) {
 			e.printStackTrace();
+		} finally {
+			closeStatement(stmt);
+			closeConnection(db_connection);
 		}
-
-		closeStatement(stmt);
-		closeConnection(db_connection);
 
 		return numero_solicitud;
 	}
@@ -268,10 +272,10 @@ public class OracleDBUtils {
 		} catch (JSONException e) {
 			numero_op = 0L;
 			e.printStackTrace();
+		} finally {
+			closeStatement(insert_numero_op_stmt);
+			closeConnection(db_connection);
 		}
-
-		closeStatement(insert_numero_op_stmt);
-		closeConnection(db_connection);
 
 		return numero_op;
 	}
@@ -292,6 +296,8 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException err) {
 			System.out.println(err.getMessage());
+		} finally {
+			closeAll(db_connection, stmt, res);
 		}
 
 		return id_evento_op;
@@ -316,10 +322,10 @@ public class OracleDBUtils {
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeStatement(stmt);
+			closeConnection(db_connection);
 		}
-
-		closeStatement(stmt);
-		closeConnection(db_connection);
 
 		return doc_codigo;
 	}
@@ -447,10 +453,11 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeResultSet(generatedKeys);
+			closeStatement(stmt);
 		}
 
-		closeResultSet(generatedKeys);
-		closeStatement(stmt);
 		return inserted_ok;
 	}
 
@@ -477,6 +484,7 @@ public class OracleDBUtils {
 
 		boolean inserted_ok = false;
 		PreparedStatement stmt = null;
+		
 		try {
 			JSONObject calculos = new JSONObject(
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
@@ -498,9 +506,9 @@ public class OracleDBUtils {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeStatement(stmt);
 		}
-
-		closeStatement(stmt);
 
 		return inserted_ok;
 	}
@@ -556,8 +564,9 @@ public class OracleDBUtils {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeStatement(stmt);
 		}
-		closeStatement(stmt);
 
 		return inserted_ok;
 	}
@@ -568,6 +577,7 @@ public class OracleDBUtils {
 
 		boolean inserted_ok = false;
 		PreparedStatement stmt = null;
+		
 		try {
 			JSONObject form_data = new JSONObject(
 					datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""))
@@ -624,9 +634,9 @@ public class OracleDBUtils {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeStatement(stmt);
 		}
-
-		closeStatement(stmt);
 
 		return inserted_ok;
 	}
@@ -652,10 +662,10 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeResultSet(res);
+			closeStatement(stmt);
 		}
-
-		closeResultSet(res);
-		closeStatement(stmt);
 
 		return id_derad;
 	}
@@ -730,9 +740,10 @@ public class OracleDBUtils {
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			closeAll(db_connection, stmt, res);
 		}
-
-		closeAll(db_connection, stmt, res);
+		
 		return existe;
 	}
 
@@ -753,9 +764,9 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeAll(connection, stmt, res);
 		}
-
-		closeAll(connection, stmt, res);
 
 		return codigo;
 	}
@@ -778,9 +789,9 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeAll(connection, stmt, res);
 		}
-
-		closeAll(connection, stmt, res);
 
 		return codigo;
 	}
@@ -802,9 +813,9 @@ public class OracleDBUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			closeAll(connection, stmt, res);
 		}
-
-		closeAll(connection, stmt, res);
 
 		return codigo;
 	}
@@ -834,9 +845,45 @@ public class OracleDBUtils {
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
 			ex.printStackTrace();
+		} finally {
+			closeStatement(stmt_new_wft_document);
+			closeConnection(db_connection);
 		}
+	}
+	
+	public static Long getSolicitudByPostulationCode(String codigoPostulacion) {
+		System.out.println(codigoPostulacion);
+		Long soli_numero_solicitud = 0L;
+		Connection db_connection = null;
+		PreparedStatement stmt = null;
+		ResultSet result = null;
+		String query = "SELECT codigo_postulacion, numero_solicitud, numero_op FROM BDC_SOLICITUD_POSTULACION WHERE codigo_postulacion = ?";
+		
+		try {
+			db_connection = connect();
+			stmt = db_connection.prepareStatement(query);
+			stmt.setString(1, codigoPostulacion);
 
-		closeStatement(stmt_new_wft_document);
-		closeConnection(db_connection);
+			result = stmt.executeQuery();
+			
+			if(result.next()) {
+				soli_numero_solicitud = result.getLong("numero_solicitud");
+			}
+			
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			closeAll(db_connection, stmt, result);
+		}
+		
+		return soli_numero_solicitud;
+	}
+	
+	public static JSONObject getUserData(String userID) throws JSONException {
+		BasicDBObject query_conditions = new BasicDBObject();
+		query_conditions.put("id", Integer.parseInt(userID));
+		JSONObject user_data = MongoDBUtils.getData(query_conditions, "usuariosTVD");
+
+		return user_data;
 	}
 }

@@ -4,9 +4,12 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cl.subtel.interop.cntv.calculotvd.CarpetaTecnica;
@@ -14,8 +17,12 @@ import cl.subtel.interop.cntv.calculotvd.CarpetaTecnicaFiles;
 import cl.subtel.interop.cntv.calculotvd.Clientes;
 import cl.subtel.interop.cntv.calculotvd.DatosEmpresa;
 import cl.subtel.interop.cntv.calculotvd.Elemento;
+import cl.subtel.interop.cntv.dto.DocumentoDTO;
+import cl.subtel.interop.cntv.dto.PostulacionDTO;
+import cl.subtel.interop.cntv.dto.RespuestaDTO;
 
 public class TvdUtils {
+	private static final Logger log = LogManager.getLogger();
 
 	public static String getIntensityByTypeService(String type_sist) {
 		String name_sist = "";
@@ -180,47 +187,35 @@ public class TvdUtils {
 		}
 	}
 
-	public static Long insertDocumentDataToMatriz(String temp_folder, String postulation_code, JSONObject user_data,
+	public static void preparedDocumentDataToInsertMatriz(Long num_ofi_parte, Long numero_solicitud, String temp_folder, String postulation_code, JSONObject user_data,
 			Logger log) throws SQLException, JSONException {
 		
 		System.out.println("insertDocumentDataToMatriz");
 		
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
-		int files_count = files_list.length;
 		int userID = user_data.getInt("id");
-		String nombre_archivo = "";
 
-		Long num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
-		Long numero_solicitud = OracleDBUtils.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
-
-		int count_doc = 0;
-		
 		if (numero_solicitud != 0L) {
-			for (int ix = 0; ix < files_count; ix++) {
-				nombre_archivo = files_list[ix].getName();
+			for (int ix = 0; ix < files_list.length; ix++) {
+				String nombre_archivo = files_list[ix].getName();
 				String unextension_file_name = nombre_archivo.split("\\.")[0];
 				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
-
 				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
 					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, userID, stdo_codigo);
 				} else {
 					if (!"".equals(stdo_codigo)) {
 						Long cod_documento = OracleDBUtils.createBDCDocumento(numero_solicitud, stdo_codigo);
+						System.out.println("cod:"+cod_documento);
 					}
 				}
-				
 				String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
 				System.out.println("Doc path:"+ doc_path);
 				if (!"".equals(stdo_codigo)) {
-					count_doc++;
 					OracleDBUtils.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
 				}
 			}
-
 		}
-		
-		return num_ofi_parte;
 	}
 
 	public static int getFormattedOPDate() {
@@ -236,5 +231,61 @@ public class TvdUtils {
 
 		return formatted_date;
 	}
+	
+	public static RespuestaDTO getDataCarpetaTecnica(PostulacionDTO postulacion, String userID, Long num_solicitud, Long num_ofi_parte, String codigoPostulacion, JSONObject user_data) {
+		boolean correcto = true;
+		String temp_folder = "";
+		String response_message = "";
 
+		try {
+			List<DocumentoDTO> lista = postulacion.getArchivos();
+			DocumentoDTO doc = lista.get(0);
+			temp_folder = CarpetaTecnica.saveFile(userID, doc);
+			
+			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder, codigoPostulacion, Integer.parseInt(userID));
+
+			log.debug(response_validate_data);
+
+			if ("".equals(response_validate_data)) {
+				TvdUtils.preparedDocumentDataToInsertMatriz(num_ofi_parte, num_solicitud, temp_folder, codigoPostulacion, user_data, log);
+				response_message = "Se recibio la carpeta tecnica";
+				correcto = true;
+			} else {
+				response_message = response_validate_data;
+			}
+		} catch (JSONException e) {
+			correcto = false;
+			response_message = "Datos tecnicos guardados incompletos";
+			log.error("recibirCarpetaTecnica:"+e.getMessage());
+			e.printStackTrace();
+		} catch (SQLException e) {
+			correcto = false;
+			log.error("recibirCarpetaTecnica:"+e.getMessage());
+			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
+			e.printStackTrace();
+		} catch (NullPointerException err) {
+			correcto = false;
+			log.error("recibirCarpetaTecnica:"+err.getMessage());
+			response_message = "No existen datos del usuario o datos técnicos guardados";
+			err.printStackTrace();
+		} catch (IOException e) {
+			correcto = false;
+			log.error("recibirCarpetaTecnica: "+ e.getMessage());
+			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
+			e.printStackTrace();
+		}
+		
+		CarpetaTecnica.deleteTempFolder(temp_folder);
+		RespuestaDTO respuesta = new RespuestaDTO();
+		String response_code = correcto ? "OK" : "NOK";
+
+		respuesta.setCodigo("OK");
+		respuesta.setMensaje("OK");
+
+		log.debug("Cod:" + response_code);
+		log.debug("Msg:" + response_message);
+		log.info("** FIN reparosCarpetaTecnica **");
+		
+		return respuesta;
+	}
 }

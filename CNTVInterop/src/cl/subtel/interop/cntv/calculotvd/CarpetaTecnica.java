@@ -25,7 +25,6 @@ public class CarpetaTecnica {
 
 		InputStream ins = technical_folder.getArchivo().getInputStream();
 		File zipped_file_folder = new File(file_directory);
-
 		zipped_file_folder.mkdirs();
 		OutputStream fos = new FileOutputStream(new File(file_directory + file_name));
 		IOUtils.copy(ins, fos);
