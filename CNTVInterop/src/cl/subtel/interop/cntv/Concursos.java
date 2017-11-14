@@ -2,6 +2,7 @@ package cl.subtel.interop.cntv;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
 import java.util.MissingResourceException;
 
 import javax.jws.WebMethod;
@@ -28,8 +29,8 @@ import cl.subtel.interop.cntv.dto.PostulacionDTO;
 import cl.subtel.interop.cntv.dto.RepresentanteLegalDTO;
 import cl.subtel.interop.cntv.dto.RespuestaDTO;
 import cl.subtel.interop.cntv.dto.UsuarioDTO;
+import cl.subtel.interop.cntv.util.DBOracleDAO;
 import cl.subtel.interop.cntv.util.FileProperties;
-import cl.subtel.interop.cntv.util.OracleDBUtils;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 @WebService(targetNamespace = "http://cntv.interop.subtel.cl/", portName = "ConcursosPort", serviceName = "ConcursosService")
@@ -164,6 +165,7 @@ public class Concursos {
 	public RespuestaDTO recibirCarpetaTecnica(@WebParam(name = "carpeta") PostulacionDTO postulacion) {
 		log.info("** recibirCarpetaTecnica ha sido invocado **");
 
+		RespuestaDTO respuesta = new RespuestaDTO();
 		String userID = postulacion.getUserId();
 		String codigoPostulacion = postulacion.getCodigoPostulacion();
 
@@ -172,19 +174,37 @@ public class Concursos {
 		Long num_solicitud = 0L;
 
 		try {
-			user_data = OracleDBUtils.getUserData(userID);
-			num_ofi_parte = OracleDBUtils.getNumeroOP(user_data.getJSONObject("empresa"));
-			num_solicitud = OracleDBUtils.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
-		} catch (NullPointerException err) {
-			log.error("recibirCarpetaTecnica:" + err.getMessage());
-			err.printStackTrace();
+
+			user_data = DBOracleDAO.getUserData(userID);
+			System.out.println(user_data);
+			num_ofi_parte = DBOracleDAO.getNumeroOP(user_data.getJSONObject("empresa"));
+			System.out.println("OP: "+num_ofi_parte);
+			num_solicitud = DBOracleDAO.createSolitudConcesiones(num_ofi_parte, user_data.getJSONObject("empresa"));
+			System.out.println("SOL: "+num_solicitud);
+
+			if (num_ofi_parte != 0L && num_solicitud != 0L) {
+				DBOracleDAO.insertSolicitudPostulacion(num_ofi_parte, num_solicitud, codigoPostulacion);
+				respuesta = TvdUtils.getDataCarpetaTecnica(postulacion, userID, num_solicitud, num_ofi_parte,
+						codigoPostulacion, user_data);
+			} else {
+				respuesta.setCodigo("NOK");
+				respuesta.setMensaje("Error obteniendo numero de solicitud y oficina de partes.");
+			}
+		} catch(NullPointerException e) {
+			respuesta.setCodigo("NOK");
+			respuesta.setMensaje("Usuario no encontrado");
+			e.printStackTrace();
 		} catch (JSONException e) {
+			respuesta.setCodigo("NOK");
+			respuesta.setMensaje("Usuario no encontrado");
 			log.error("recibirCarpetaTecnica:" + e.getMessage());
+			e.printStackTrace();
+		} catch (SQLException e) {
+			respuesta.setCodigo("NOK");
+			respuesta.setMensaje("Ya existe esta postulación");
 			e.printStackTrace();
 		}
 
-		RespuestaDTO respuesta = TvdUtils.getDataCarpetaTecnica(postulacion, userID, num_solicitud, num_ofi_parte,
-				codigoPostulacion, user_data);
 		return respuesta;
 	}
 

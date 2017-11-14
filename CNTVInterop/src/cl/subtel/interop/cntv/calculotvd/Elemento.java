@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+import cl.subtel.interop.cntv.util.DBOracleDAO;
 import cl.subtel.interop.cntv.util.MongoDBUtils;
-import cl.subtel.interop.cntv.util.OracleDBUtils;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 public class Elemento {
@@ -83,20 +83,23 @@ public class Elemento {
 	public static int getTecCodigo() {
 		return TEC_CODIGO;
 	}
-	
-	public static void insertarDatosSistPrincipal(String nombre_archivo, Long numero_solicitud, String codigo_postulacion, int userID, String stdo_codigo) throws SQLException, JSONException {
-		
-		JSONObject datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion, userID);
 
-		Elemento elemento_principal = TvdUtils.createElementoSistPrincipal(datos_sist_principal, nombre_archivo, "Planta Transmisora");
+	public static void insertarDatosSistPrincipal(String nombre_archivo, Long numero_solicitud,
+			String codigo_postulacion, int userID, String stdo_codigo) throws SQLException, JSONException {
+
+		JSONObject datos_sist_principal = MongoDBUtils.getDatosTecnicosConcurso(nombre_archivo, codigo_postulacion,
+				userID);
+
+		Elemento elemento_principal = TvdUtils.createElementoSistPrincipal(datos_sist_principal, nombre_archivo,
+				"Planta Transmisora");
 		Elemento estudios[] = TvdUtils.createElementosEstudios(datos_sist_principal, nombre_archivo);
 
-		OracleDBUtils.insertElemento(elemento_principal, datos_sist_principal, true, numero_solicitud, stdo_codigo);	
+		DBOracleDAO.insertElemento(elemento_principal, datos_sist_principal, true, numero_solicitud, stdo_codigo);
 		int idx_loop = 0;
 		int cant_elementos_estudios = estudios.length;
-		while(idx_loop < cant_elementos_estudios) {
-			if(estudios[idx_loop] != null) {
-				OracleDBUtils.insertElemento(estudios[idx_loop], datos_sist_principal, false, numero_solicitud, "");
+		while (idx_loop < cant_elementos_estudios) {
+			if (estudios[idx_loop] != null) {
+				DBOracleDAO.insertElemento(estudios[idx_loop], datos_sist_principal, false, numero_solicitud, "");
 			}
 			idx_loop++;
 		}

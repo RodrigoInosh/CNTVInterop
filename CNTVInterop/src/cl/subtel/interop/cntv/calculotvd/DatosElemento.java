@@ -1,11 +1,14 @@
 package cl.subtel.interop.cntv.calculotvd;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import cl.subtel.interop.cntv.util.OracleDBUtils;
+import cl.subtel.interop.cntv.util.DBOracleDAO;
 
 public class DatosElemento {
+	private static final Logger log = LogManager.getLogger();
 
 	private Long elm_codigo;
 	private final static String DTE_MOVIMIENTO = "A"; // A: Agrega, E: Elimina,
@@ -486,13 +489,14 @@ public class DatosElemento {
 	}
 
 	public static DatosElemento createObjectElementoDatos(Long elemento_id, JSONObject datos_sist_principal) {
-		System.out.println("createObjectElementoDatos()");
+		log.debug("createObjectElementoDatos()");
 		DatosElemento datos_elemento_object = new DatosElemento();
 		JSONObject calculos = null;
 		JSONObject caract_tecnicas = null;
 		JSONObject datos_concurso = null;
 		JSONObject est_principal = null;
 		JSONObject est_alternativo = null;
+
 		try {
 			calculos = new JSONObject(datos_sist_principal.getString("calculos").replace("[", "").replace("]", ""));
 			caract_tecnicas = calculos.getJSONObject("form_data").getJSONObject("carac_tecnicas");
@@ -505,14 +509,14 @@ public class DatosElemento {
 			String comuna = caract_tecnicas.get("comunaNamePTx").toString();
 			String nombre_tipo_antena = getNombreTipoAntena(caract_tecnicas.get("tipo_antena").toString());
 			String tipo_radiacion = getTipoRadiacion(calculos);
-			String tian_cod = OracleDBUtils.getTianCod(nombre_tipo_antena);
+			String tian_cod = DBOracleDAO.getTianCod(nombre_tipo_antena);
 			double latitud = getDoubleValue(calculos, "latitud");
 			double longitud = getDoubleValue(calculos, "longitud");
 			double polarizacion_perc_horizontal = getDoubleValue(caract_tecnicas, "perc_horizontal");
 			double polarizacion_perc_vertical = getDoubleValue(caract_tecnicas, "perc_vertical");
-			String polarizacion_cod = OracleDBUtils.getPolarizacionCod(polarizacion_perc_horizontal,
+			String polarizacion_cod = DBOracleDAO.getPolarizacionCod(polarizacion_perc_horizontal,
 					polarizacion_perc_vertical);
-			String tipo_emision_cod = OracleDBUtils.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
+			String tipo_emision_cod = DBOracleDAO.getTipoEmisionCod(datos_concurso.get("tipo_emision").toString());
 			double potencia = getDoubleValue(calculos, "pPotencia");
 			String ganacia_max = caract_tecnicas.get("ganancia_max").toString();
 			String altura_antena_tx = calculos.get("pAlturaAntenaTx").toString();
@@ -531,10 +535,10 @@ public class DatosElemento {
 			String pot_max_tx = calculos.get("pPotencia").toString();
 			String cantidad_elem = caract_tecnicas.get("num_elem").toString();
 
-			Long cod_comuna = getLongValue(caract_tecnicas.get("comunaPTx").toString());//OracleDBUtils.getCodigoComuna(comuna);
-			Long cod_region = getLongValue(caract_tecnicas.get("regionPTx").toString());//OracleDBUtils.getCodigoRegion(cod_comuna);
-			Long cod_localidad = OracleDBUtils.getCodigoLocalidad(cod_comuna);
-			
+			Long cod_comuna = getLongValue(caract_tecnicas.get("comunaPTx").toString());// OracleDBUtils.getCodigoComuna(comuna);
+			Long cod_region = getLongValue(caract_tecnicas.get("regionPTx").toString());// OracleDBUtils.getCodigoRegion(cod_comuna);
+			Long cod_localidad = DBOracleDAO.getCodigoLocalidad(cod_comuna);
+
 			String perdidas_div_potencia = calculos.get("pDivisorPotencia").toString();
 			String ganancia_plano_horizontal = calculos.get("pGanancia").toString();
 			double frecuencia = getDoubleValue(calculos, "pFrecuencia");
@@ -546,7 +550,7 @@ public class DatosElemento {
 			double longitud_minutos = getDoubleValue(calculos, "pLongitudMinutes");
 			double longitud_segundos = getDoubleValue(calculos, "pLongitudSeconds");
 			String zona_servicio = datos_sist_principal.get("identificador").toString();
-			
+
 			datos_elemento_object.setElm_codigo(elemento_id);
 			datos_elemento_object.setDte_direccion(direccion);
 			datos_elemento_object.setPunto_tx(direccion);
@@ -597,57 +601,71 @@ public class DatosElemento {
 
 		return datos_elemento_object;
 	}
-	
+
 	public static Long getLongValue(String value) {
 		Long cast_value = 0L;
 		try {
 			cast_value = Long.parseLong(value);
 		} catch (NumberFormatException e) {
-//			e.printStackTrace();
+			// e.printStackTrace();
 		}
-		
+
 		return cast_value;
 	}
-	
+
 	public static double getDoubleValue(JSONObject object, String name_field) {
 		double value = 0;
 		try {
 			value = Double.parseDouble(object.get(name_field).toString());
 		} catch (NumberFormatException e) {
-//			e.printStackTrace();
+			// e.printStackTrace();
 		} catch (JSONException e) {
-//			e.printStackTrace();
+			// e.printStackTrace();
 		}
-		
+
 		return value;
 	}
 
 	public static String getNombreTipoAntena(String tipo_antena) {
 		String nombre_tipo_antena = "";
 
-		switch (tipo_antena) {
-		case "ranura":
+		// switch (tipo_antena) {
+		// case "ranura":
+		// nombre_tipo_antena = "RANURA";
+		// break;
+		// case "princ":
+		// nombre_tipo_antena = "PANEL/DIRECCIONAL";
+		// break;
+		// case "supert":
+		// nombre_tipo_antena = "SUPERTURSTILE";
+		// break;
+		// case "yagi":
+		// nombre_tipo_antena = "YAGI";
+		// break;
+		// case "logP":
+		// nombre_tipo_antena = "LOG PERIODICA";
+		// break;
+		// case "otro":
+		// nombre_tipo_antena = "OTRO";
+		// break;
+		// default:
+		// nombre_tipo_antena = "";
+		// break;
+		// }
+		if (tipo_antena.equals("ranura"))
 			nombre_tipo_antena = "RANURA";
-			break;
-		case "princ":
+		else if (tipo_antena.equals("princ"))
 			nombre_tipo_antena = "PANEL/DIRECCIONAL";
-			break;
-		case "supert":
+		else if (tipo_antena.equals("supert"))
 			nombre_tipo_antena = "SUPERTURSTILE";
-			break;
-		case "yagi":
+		else if (tipo_antena.equals("yagi"))
 			nombre_tipo_antena = "YAGI";
-			break;
-		case "logP":
+		else if (tipo_antena.equals("logP"))
 			nombre_tipo_antena = "LOG PERIODICA";
-			break;
-		case "otro":
+		else if (tipo_antena.equals("otro"))
 			nombre_tipo_antena = "OTRO";
-			break;
-		default:
+		else
 			nombre_tipo_antena = "";
-			break;
-		}
 
 		return nombre_tipo_antena;
 	}
@@ -671,7 +689,7 @@ public class DatosElemento {
 	}
 
 	public String validateData() {
-		System.out.println("validateData");
+		log.debug("validateData");
 		String message_response = "";
 
 		if ("".equals(comuna_nombre)) {
@@ -688,20 +706,20 @@ public class DatosElemento {
 
 		return message_response;
 	}
-	
+
 	public static String getTipoRadiacion(JSONObject calculos) {
 		String tipo_radiacion = "";
 		double min_perdida_lobulo = Integer.MAX_VALUE;
 		double max_perdida_lobulo = 0;
-		
+
 		try {
 			int radiales = Integer.parseInt(calculos.get("radiales").toString());
 			int grados = 360 / radiales;
-			
+
 			double perd_lobulo_actual;
-			
-			for(int ix = 0; ix < radiales; ix++){
-				perd_lobulo_actual = Double.parseDouble(calculos.get("M"+radiales+"PL"+(grados*ix)).toString());
+
+			for (int ix = 0; ix < radiales; ix++) {
+				perd_lobulo_actual = Double.parseDouble(calculos.get("M" + radiales + "PL" + (grados * ix)).toString());
 				min_perdida_lobulo = getMinValue(min_perdida_lobulo, perd_lobulo_actual);
 				max_perdida_lobulo = getMaxValue(max_perdida_lobulo, perd_lobulo_actual);
 			}
@@ -710,46 +728,46 @@ public class DatosElemento {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
+
 		double diferencia = max_perdida_lobulo - min_perdida_lobulo;
 		tipo_radiacion = getNameTipoRadiacion(diferencia);
-		
+
 		return tipo_radiacion;
 	}
-	
+
 	private static double getMinValue(double min_perdida_lobulo, double perd_lobulo_actual) {
 		double minimo = 0;
-		
-		if(min_perdida_lobulo > perd_lobulo_actual) {
+
+		if (min_perdida_lobulo > perd_lobulo_actual) {
 			minimo = perd_lobulo_actual;
 		} else {
 			minimo = min_perdida_lobulo;
 		}
-		
+
 		return minimo;
 	}
-	
+
 	private static double getMaxValue(double max_perdida_lobulo, double perd_lobulo_actual) {
 		double minimo = 0;
-		
-		if(max_perdida_lobulo < perd_lobulo_actual) {
+
+		if (max_perdida_lobulo < perd_lobulo_actual) {
 			minimo = perd_lobulo_actual;
 		} else {
 			minimo = max_perdida_lobulo;
 		}
-		
+
 		return minimo;
 	}
-	
+
 	private static String getNameTipoRadiacion(double diferencia) {
 		String tipo_radiacion = "";
-		
-		if(diferencia > 3) {
+
+		if (diferencia > 3) {
 			tipo_radiacion = "DIR";
 		} else {
 			tipo_radiacion = "OMN";
 		}
-		
+
 		return tipo_radiacion;
 	}
 }

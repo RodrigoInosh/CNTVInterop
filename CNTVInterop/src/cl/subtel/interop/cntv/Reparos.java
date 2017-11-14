@@ -11,7 +11,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import cl.subtel.interop.cntv.dto.PostulacionDTO;
 import cl.subtel.interop.cntv.dto.RespuestaDTO;
-import cl.subtel.interop.cntv.util.OracleDBUtils;
+import cl.subtel.interop.cntv.util.DBOracleDAO;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 @WebService(targetNamespace = "http://cntv.interop.subtel.cl/", portName = "ReparosPort", serviceName = "ReparosService")
@@ -24,6 +24,7 @@ public class Reparos {
 	public RespuestaDTO reparosCarpetaTecnica(@WebParam(name = "arg0") PostulacionDTO postulacion) {
 		log.info("** reparosCarpetaTecnica ha sido invocado **");
 
+		RespuestaDTO respuesta = new RespuestaDTO();
 		String userID = postulacion.getUserId();
 		String codigoPostulacion = postulacion.getCodigoPostulacion();
 		JSONObject userData = new JSONObject();
@@ -31,9 +32,20 @@ public class Reparos {
 		Long numOfiParte = 0L;
 
 		try {
-			userData = OracleDBUtils.getUserData(userID);
-			numSolicitud = OracleDBUtils.getSolicitudByPostulationCode(codigoPostulacion);
-			numOfiParte = OracleDBUtils.getNumeroOP(userData.getJSONObject("empresa"));
+			userData = DBOracleDAO.getUserData(userID);
+			System.out.println(userData);
+			numSolicitud = DBOracleDAO.getSolicitudByPostulationCode(codigoPostulacion);
+			System.out.println(numSolicitud);
+			numOfiParte = DBOracleDAO.getNumeroOP(userData.getJSONObject("empresa"));
+			System.out.println(numOfiParte);
+
+			if (numSolicitud != 0L && numOfiParte != 0L) {
+				respuesta = TvdUtils.getDataCarpetaTecnica(postulacion, userID, numSolicitud, numOfiParte,
+						codigoPostulacion, userData);
+			} else {
+				respuesta.setCodigo("NOK");
+				respuesta.setMensaje("Error obteniendo numero de solicitud y oficina de partes.");
+			}
 		} catch (NullPointerException err) {
 			log.error("recibirCarpetaTecnica:" + err.getMessage());
 			err.printStackTrace();
@@ -42,8 +54,6 @@ public class Reparos {
 			e.printStackTrace();
 		}
 
-		RespuestaDTO respuesta = TvdUtils.getDataCarpetaTecnica(postulacion, userID, numSolicitud, numOfiParte,
-				codigoPostulacion, userData);
 		return respuesta;
 	}
 }

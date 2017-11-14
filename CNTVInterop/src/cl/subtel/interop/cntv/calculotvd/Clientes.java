@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 import org.apache.logging.log4j.Logger;
 
-import cl.subtel.interop.cntv.util.OracleDBUtils;
+import cl.subtel.interop.cntv.util.DBOracleUtils;
 
 public class Clientes {
 
@@ -91,12 +91,11 @@ public class Clientes {
 
 	public static void insertDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
 
-		Connection db_connection = OracleDBUtils.connect();
+		Connection db_connection = DBOracleUtils.getSingletonInstance();
 		PreparedStatement stmt_insert_cliente = null;
 		PreparedStatement stmt_insert_data_empresa = null;
 
 		try {
-			db_connection.setAutoCommit(false);
 
 			stmt_insert_cliente = db_connection.prepareStatement(
 					"INSERT INTO BDC_SUBTEL.CLIENTES (RUT_CLIENTE, ACT_COD_ACTIVIDAD_SII, TP_COD_TIPO_PERSONALIDAD, COD_COMUNA, DV, NOMBRE_RZ, ALIAS, DIRECCION, FECHA_INGRESO) "
@@ -127,31 +126,25 @@ public class Clientes {
 
 			stmt_insert_data_empresa.executeUpdate();
 
-			db_connection.getAutoCommit();
 		} catch (SQLException e) {
-			try {
-				db_connection.rollback();
-			} catch (SQLException e1) {
-				System.out.println(e1.getMessage());
-				e1.printStackTrace();
-			}
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			DBOracleUtils.closeStatement(stmt_insert_cliente);
+			DBOracleUtils.closeStatement(stmt_insert_data_empresa);
+			DBOracleUtils.closeConnection(db_connection);
 		}
-		OracleDBUtils.closeStatement(stmt_insert_cliente);
-		OracleDBUtils.closeStatement(stmt_insert_data_empresa);
-		OracleDBUtils.closeConnection(db_connection);
+
 		log.debug("---DATOS CLIENTE Y EMPRESA INGRESADOS CORRECTAMENTE---");
 	}
 
 	public static void updateDataCliente(Clientes data_cliente, DatosEmpresa datos_empresa, Logger log) {
 
-		Connection db_connection = OracleDBUtils.connect();
+		Connection db_connection = DBOracleUtils.getSingletonInstance();
 		PreparedStatement stmt_insert_cliente = null;
 		PreparedStatement stmt_insert_data_empresa = null;
 
 		try {
-			db_connection.setAutoCommit(false);
 
 			stmt_insert_cliente = db_connection.prepareStatement(
 					"UPDATE BDC_SUBTEL.CLIENTES SET ACT_COD_ACTIVIDAD_SII = ?, TP_COD_TIPO_PERSONALIDAD = ?, COD_COMUNA =?, DV = ?, NOMBRE_RZ = ?, ALIAS = ?, DIRECCION = ?, FECHA_MODIFICA = SYSDATE "
@@ -181,21 +174,15 @@ public class Clientes {
 
 			stmt_insert_data_empresa.executeUpdate();
 
-			db_connection.getAutoCommit();
 			log.debug("---DATOS CLIENTE Y EMPRESA ACTUALIZADOS CORRECTAMENTE---");
 		} catch (SQLException e) {
-			try {
-				db_connection.rollback();
-			} catch (SQLException e1) {
-				log.error(e1.getMessage());
-				e1.printStackTrace();
-			}
 			log.error(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			DBOracleUtils.closeStatement(stmt_insert_cliente);
+			DBOracleUtils.closeStatement(stmt_insert_data_empresa);
+			DBOracleUtils.closeConnection(db_connection);
 		}
-		OracleDBUtils.closeStatement(stmt_insert_cliente);
-		OracleDBUtils.closeStatement(stmt_insert_data_empresa);
-		OracleDBUtils.closeConnection(db_connection);
 		
 	}
 }

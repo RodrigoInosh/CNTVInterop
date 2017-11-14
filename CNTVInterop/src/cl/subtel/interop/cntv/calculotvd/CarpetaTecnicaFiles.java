@@ -216,80 +216,125 @@ public class CarpetaTecnicaFiles {
 			doc_type = array_aux[0] + "_" + array_aux[1];
 		}
 
-		switch (doc_type) {
-		case ZONA_SERVICIO_PTX0:
+		if (doc_type.equals(ZONA_SERVICIO_PTX0))
 			stdo_cod = COD_ZONA_SERVICIO_PTX0;
-			break;
-		case ZONA_SERVICIO_PTX1:
+
+		else if (doc_type.equals(ZONA_SERVICIO_PTX1))
 			stdo_cod = COD_ZONA_SERVICIO_PTX1;
-			break;
-		case ZONA_SERVICIO_PTX2:
+
+		else if (doc_type.equals(ZONA_SERVICIO_PTX2))
 			stdo_cod = COD_ZONA_SERVICIO_PTX2;
-			break;
-		case ZONA_COBERTURA_PTX0:
+
+		else if (doc_type.equals(ZONA_COBERTURA_PTX0))
 			stdo_cod = COD_ZONA_COBERTURA_PTX0;
-			break;
-		case ZONA_COBERTURA_PTX1:
+
+		else if (doc_type.equals(ZONA_COBERTURA_PTX1))
 			stdo_cod = COD_ZONA_COBERTURA_PTX1;
-			break;
-		case ZONA_COBERTURA_PTX2:
+
+		else if (doc_type.equals(ZONA_COBERTURA_PTX2))
 			stdo_cod = COD_ZONA_COBERTURA_PTX2;
-			break;
-		case ZONA_URBANA_PTX0:
+
+		else if (doc_type.equals(ZONA_URBANA_PTX0))
 			stdo_cod = COD_ZONA_URBANA_PTX0;
-			break;
-		case ZONA_URBANA_PTX1:
+
+		else if (doc_type.equals(ZONA_URBANA_PTX1))
 			stdo_cod = COD_ZONA_URBANA_PTX1;
-			break;
-		case ZONA_URBANA_PTX2:
+
+		else if (doc_type.equals(ZONA_URBANA_PTX2))
 			stdo_cod = COD_ZONA_URBANA_PTX2;
-			break;
-		case LISTADO_EQUIPOS:
+
+		else if (doc_type.equals(LISTADO_EQUIPOS))
 			stdo_cod = COD_LISTADO_EQUIPOS;
-			break;
-		case MEMORIA_CALCULOS_PERIDAS:
+
+		else if (doc_type.equals(MEMORIA_CALCULOS_PERIDAS))
 			stdo_cod = COD_MEMORIA_CALCULOS_PERIDAS;
-			break;
-		case MODELAMIENTO_ANTENA:
+
+		else if (doc_type.equals(MODELAMIENTO_ANTENA))
 			stdo_cod = COD_MODELAMIENTO_ANTENA;
-			break;
-		case DIAGRAMA_RADIACION_HORIZONTAL:
+
+		else if (doc_type.equals(DIAGRAMA_RADIACION_HORIZONTAL))
 			stdo_cod = COD_DIAGRAMA_RADIACION_HORIZONTAL;
-			break;
-		case DIAGRAMA_RADIACION_VERTICAL:
+
+		else if (doc_type.equals(DIAGRAMA_RADIACION_VERTICAL))
 			stdo_cod = COD_DIAGRAMA_RADIACION_VERTICAL;
-			break;
-		case DESCRIPCION_EQUIPAMIENTO:
+
+		else if (doc_type.equals(DESCRIPCION_EQUIPAMIENTO))
 			stdo_cod = COD_DESCRIPCION_EQUIPAMIENTO;
-			break;
-		case CATALOGO_EQUIPOS:
+
+		else if (doc_type.equals(CATALOGO_EQUIPOS))
 			stdo_cod = COD_CATALOGO_EQUIPOS;
-			break;
-		case SERVICIOS_INTERACTIVOS:
+
+		else if (doc_type.equals(SERVICIOS_INTERACTIVOS))
 			stdo_cod = COD_SERVICIOS_INTERACTIVOS;
-			break;
-		case CERTIFICADO_DGAC:
+
+		else if (doc_type.equals(CERTIFICADO_DGAC))
 			stdo_cod = COD_CERTIFICADO_DGAC;
-			break;
-		case EFICIENCIA_ESPECTRAL:
+
+		else if (doc_type.equals(EFICIENCIA_ESPECTRAL))
 			stdo_cod = COD_EFICIENCIA_ESPECTRAL;
-			break;
-		}
 
-		return stdo_cod;
+			// switch (doc_type) {
+			// case ZONA_SERVICIO_PTX0:
+			// stdo_cod = COD_ZONA_SERVICIO_PTX0;
+			// break;
+			// case ZONA_SERVICIO_PTX1:
+			// stdo_cod = COD_ZONA_SERVICIO_PTX1;
+			// break;
+			// case ZONA_SERVICIO_PTX2:
+			// stdo_cod = COD_ZONA_SERVICIO_PTX2;
+			// break;
+			// case ZONA_COBERTURA_PTX0:
+			// stdo_cod = COD_ZONA_COBERTURA_PTX0;
+			// break;
+			// case ZONA_COBERTURA_PTX1:
+			// stdo_cod = COD_ZONA_COBERTURA_PTX1;
+			// break;
+			// case ZONA_COBERTURA_PTX2:
+			// stdo_cod = COD_ZONA_COBERTURA_PTX2;
+			// break;
+			// case ZONA_URBANA_PTX0:
+			// stdo_cod = COD_ZONA_URBANA_PTX0;
+			// break;
+			// case ZONA_URBANA_PTX1:
+			// stdo_cod = COD_ZONA_URBANA_PTX1;
+			// break;
+			// case ZONA_URBANA_PTX2:
+			// stdo_cod = COD_ZONA_URBANA_PTX2;
+			// break;
+			// case LISTADO_EQUIPOS:
+			// stdo_cod = COD_LISTADO_EQUIPOS;
+			// break;
+			// case MEMORIA_CALCULOS_PERIDAS:
+			// stdo_cod = COD_MEMORIA_CALCULOS_PERIDAS;
+			// break;
+			// case MODELAMIENTO_ANTENA:
+			// stdo_cod = COD_MODELAMIENTO_ANTENA;
+			// break;
+			// case DIAGRAMA_RADIACION_HORIZONTAL:
+			// stdo_cod = COD_DIAGRAMA_RADIACION_HORIZONTAL;
+			// break;
+			// case DIAGRAMA_RADIACION_VERTICAL:
+			// stdo_cod = COD_DIAGRAMA_RADIACION_VERTICAL;
+			// break;
+			// case DESCRIPCION_EQUIPAMIENTO:
+			// stdo_cod = COD_DESCRIPCION_EQUIPAMIENTO;
+			// break;
+			// case CATALOGO_EQUIPOS:
+			// stdo_cod = COD_CATALOGO_EQUIPOS;
+			// break;
+			// case SERVICIOS_INTERACTIVOS:
+			// stdo_cod = COD_SERVICIOS_INTERACTIVOS;
+			// break;
+			// case CERTIFICADO_DGAC:
+			// stdo_cod = COD_CERTIFICADO_DGAC;
+			// break;
+			// case EFICIENCIA_ESPECTRAL:
+			// stdo_cod = COD_EFICIENCIA_ESPECTRAL;
+			// break;
+			// }
+
+			return stdo_cod;
 	}
-
-//	public static void test_upload(String temp_folder, String user_name) {
-//		File temp_technical_folder = new File(temp_folder);
-//		File[] files_list = temp_technical_folder.listFiles();
-//		String nombre_archivo = "";
-//		int files_count = files_list.length;
-//
-//		for (File file : files_list) {
-//			nombre_archivo = file.getName();
-//			String doc_path = CarpetaTecnicaFiles.uploadFile(file, nombre_archivo, 12L);
-//		}
-//	}
 
 	public static void test_create_folder(Long numero_of_parte) {
 		String year = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
@@ -324,7 +369,7 @@ public class CarpetaTecnicaFiles {
 
 	public static String uploadFile(File document, String doc_name, Long numero_of_parte) {
 
-		String year = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+		String year = "test";// String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
 		String doc_path = PATH + FILE_SEPARATOR + year + FILE_SEPARATOR + numero_of_parte + FILE_SEPARATOR;
 		String server_path = SERVER_ROOT_PATH + "\\" + year + "\\" + numero_of_parte + "\\";
 		doc_name = year + "_" + numero_of_parte + "_" + doc_name;

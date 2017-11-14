@@ -5,6 +5,7 @@ import org.codehaus.jettison.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.List;
@@ -27,19 +28,26 @@ public class TvdUtils {
 	public static String getIntensityByTypeService(String type_sist) {
 		String name_sist = "";
 
-		switch (type_sist) {
-		case "ZonaServicio":
+		if (type_sist.equals("ZonaServicio"))
 			name_sist = "48";
-			break;
-		case "ZonaCobertura":
+		else if (type_sist.equals("ZonaCobertura"))
 			name_sist = "40";
-			break;
-		case "ZonaUrbana":
+		else if (type_sist.equals("ZonaUrbana"))
 			name_sist = "66";
-			break;
-		default:
-			break;
-		}
+
+		// switch (type_sist) {
+		// case "ZonaServicio":
+		// name_sist = "48";
+		// break;
+		// case "ZonaCobertura":
+		// name_sist = "40";
+		// break;
+		// case "ZonaUrbana":
+		// name_sist = "66";
+		// break;
+		// default:
+		// break;
+		// }
 
 		return name_sist;
 	}
@@ -47,19 +55,25 @@ public class TvdUtils {
 	public static String getSistRadiantTypeByAlias(String anthena_alias) {
 		String anthena_name = "";
 
-		switch (anthena_alias) {
-		case "PTx0":
+		if (anthena_alias.equals("PTx0"))
 			anthena_name = "sistRadiantePrinc";
-			break;
-		case "PTx1":
+		else if (anthena_alias.equals("PTx1"))
 			anthena_name = "sistRadianteAdic1";
-			break;
-		case "PTx2":
+		else if (anthena_alias.equals("PTx2"))
 			anthena_name = "sistRadianteAdic2";
-			break;
-		default:
-			break;
-		}
+		// switch (anthena_alias) {
+		// case "PTx0":
+		// anthena_name = "sistRadiantePrinc";
+		// break;
+		// case "PTx1":
+		// anthena_name = "sistRadianteAdic1";
+		// break;
+		// case "PTx2":
+		// anthena_name = "sistRadianteAdic2";
+		// break;
+		// default:
+		// break;
+		// }
 
 		return anthena_name;
 	}
@@ -70,9 +84,7 @@ public class TvdUtils {
 		Elemento elemento_sist_principal = new Elemento();
 		String elm_nombre = nombre_archivo;
 		String rut_cliente = "";
-		int tel_codigo = OracleDBUtils.getTelCodByTipoElemento(tipo_elemento);
-
-		OracleDBUtils.connect();
+		int tel_codigo = DBOracleDAO.getTelCodByTipoElemento(tipo_elemento);
 
 		try {
 			String datos = datos_sist_principal.getString("datos").replace("[", "").replace("]", "");
@@ -85,7 +97,6 @@ public class TvdUtils {
 			elemento_sist_principal.setTel_codigo(tel_codigo);
 
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -175,7 +186,7 @@ public class TvdUtils {
 
 			DatosEmpresa empresa = TvdUtils.createDatosEmpresaFromJSON(cliente,
 					user_data.getJSONObject("representanteLegal"));
-			if (!OracleDBUtils.existeCliente(rut_empresa)) {
+			if (!DBOracleDAO.existeCliente(rut_empresa)) {
 				log.debug("Cliente no existe, agregando...");
 				Clientes.insertDataCliente(cliente, empresa, log);
 			} else {
@@ -187,11 +198,11 @@ public class TvdUtils {
 		}
 	}
 
-	public static void preparedDocumentDataToInsertMatriz(Long num_ofi_parte, Long numero_solicitud, String temp_folder, String postulation_code, JSONObject user_data,
-			Logger log) throws SQLException, JSONException {
-		
-		System.out.println("insertDocumentDataToMatriz");
-		
+	public static void preparedDocumentDataToInsertMatriz(Long num_ofi_parte, Long numero_solicitud, String temp_folder,
+			String postulation_code, JSONObject user_data, Logger log) throws SQLException, JSONException {
+
+		log.debug("insertDocumentDataToMatriz");
+
 		File temp_technical_folder = new File(temp_folder);
 		File[] files_list = temp_technical_folder.listFiles();
 		int userID = user_data.getInt("id");
@@ -202,17 +213,18 @@ public class TvdUtils {
 				String unextension_file_name = nombre_archivo.split("\\.")[0];
 				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
 				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
-					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, userID, stdo_codigo);
+					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, userID,
+							stdo_codigo);
 				} else {
 					if (!"".equals(stdo_codigo)) {
-						Long cod_documento = OracleDBUtils.createBDCDocumento(numero_solicitud, stdo_codigo);
-						System.out.println("cod:"+cod_documento);
+						Long cod_documento = DBOracleDAO.createBDCDocumento(numero_solicitud, stdo_codigo);
+						System.out.println("cod:" + cod_documento);
 					}
 				}
 				String doc_path = CarpetaTecnicaFiles.uploadFile(files_list[ix], nombre_archivo, num_ofi_parte);
-				System.out.println("Doc path:"+ doc_path);
+				log.debug("Doc path:" + doc_path);
 				if (!"".equals(stdo_codigo)) {
-					OracleDBUtils.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
+					DBOracleDAO.createWftDocumento(doc_path, stdo_codigo, numero_solicitud, num_ofi_parte);
 				}
 			}
 		}
@@ -231,61 +243,81 @@ public class TvdUtils {
 
 		return formatted_date;
 	}
-	
-	public static RespuestaDTO getDataCarpetaTecnica(PostulacionDTO postulacion, String userID, Long num_solicitud, Long num_ofi_parte, String codigoPostulacion, JSONObject user_data) {
+
+	public static RespuestaDTO getDataCarpetaTecnica(PostulacionDTO postulacion, String userID, Long num_solicitud,
+			Long num_ofi_parte, String codigoPostulacion, JSONObject user_data) {
 		boolean correcto = true;
 		String temp_folder = "";
 		String response_message = "";
+
+		Connection db_connection = DBOracleUtils.getSingletonInstance();
 
 		try {
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
 			temp_folder = CarpetaTecnica.saveFile(userID, doc);
-			
-			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder, codigoPostulacion, Integer.parseInt(userID));
+
+			String response_validate_data = CarpetaTecnica.validateDataTecnica(temp_folder, codigoPostulacion,
+					Integer.parseInt(userID));
 
 			log.debug(response_validate_data);
 
 			if ("".equals(response_validate_data)) {
-				TvdUtils.preparedDocumentDataToInsertMatriz(num_ofi_parte, num_solicitud, temp_folder, codigoPostulacion, user_data, log);
+				TvdUtils.preparedDocumentDataToInsertMatriz(num_ofi_parte, num_solicitud, temp_folder,
+						codigoPostulacion, user_data, log);
+
+				DBOracleUtils.commit();
 				response_message = "Se recibio la carpeta tecnica";
 				correcto = true;
 			} else {
 				response_message = response_validate_data;
 			}
+
 		} catch (JSONException e) {
 			correcto = false;
 			response_message = "Datos tecnicos guardados incompletos";
-			log.error("recibirCarpetaTecnica:"+e.getMessage());
+			log.error("recibirCarpetaTecnica:" + e.getMessage());
+			DBOracleUtils.rollback();
 			e.printStackTrace();
 		} catch (SQLException e) {
 			correcto = false;
-			log.error("recibirCarpetaTecnica:"+e.getMessage());
+			log.error("recibirCarpetaTecnica:" + e.getMessage());
 			response_message = "Error en postulación, contactarse con: mesa.ayuda@subtel.gob.cl";
+			DBOracleUtils.rollback();
 			e.printStackTrace();
 		} catch (NullPointerException err) {
 			correcto = false;
-			log.error("recibirCarpetaTecnica:"+err.getMessage());
+			log.error("recibirCarpetaTecnica:" + err.getMessage());
 			response_message = "No existen datos del usuario o datos técnicos guardados";
+			DBOracleUtils.rollback();
 			err.printStackTrace();
 		} catch (IOException e) {
 			correcto = false;
-			log.error("recibirCarpetaTecnica: "+ e.getMessage());
+			log.error("recibirCarpetaTecnica: " + e.getMessage());
 			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
+			DBOracleUtils.rollback();
 			e.printStackTrace();
+		} catch (IllegalArgumentException ex) {
+			correcto = false;
+			log.error("recibirCarpetaTecnica: " + ex.getMessage());
+			response_message = "Error descomprimiendo archivo carpeta tecnica, contactarse con: mesa.ayuda@subtel.gob.cl";
+			DBOracleUtils.rollback();
+			ex.printStackTrace();
+		} finally {
+			DBOracleUtils.closeConnection(db_connection);
 		}
-		
+
 		CarpetaTecnica.deleteTempFolder(temp_folder);
 		RespuestaDTO respuesta = new RespuestaDTO();
 		String response_code = correcto ? "OK" : "NOK";
 
-		respuesta.setCodigo("OK");
-		respuesta.setMensaje("OK");
+		respuesta.setCodigo(response_code);
+		respuesta.setMensaje(response_message);
 
 		log.debug("Cod:" + response_code);
 		log.debug("Msg:" + response_message);
 		log.info("** FIN reparosCarpetaTecnica **");
-		
+
 		return respuesta;
 	}
 }

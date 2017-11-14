@@ -11,6 +11,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.cxf.helpers.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -18,6 +20,7 @@ import cl.subtel.interop.cntv.dto.DocumentoDTO;
 import cl.subtel.interop.cntv.util.MongoDBUtils;
 
 public class CarpetaTecnica {
+	private static final Logger log = LogManager.getLogger();
 
 	public static String saveFile(String userID, DocumentoDTO technical_folder) throws IOException {
 		String file_name = technical_folder.getNombreArchivo();
@@ -77,8 +80,9 @@ public class CarpetaTecnica {
 		while (ze != null) {
 
 			String fileName = ze.getName();
+			System.out.println(destDir + File.separator + fileName);
 			File newFile = new File(destDir + File.separator + fileName);
-			new File(newFile.getParent()).mkdirs();
+//			new File(newFile.getParent()).mkdirs();
 			FileOutputStream fos = new FileOutputStream(newFile);
 			int len;
 
@@ -117,7 +121,7 @@ public class CarpetaTecnica {
 					DatosElemento datos_elemento = DatosElemento.createObjectElementoDatos(0L, datos_sist_principal);
 					validate_message = datos_elemento.validateData();
 				} catch (JSONException e) {
-					System.out.println("error validateDataTecnica: " + e.getMessage());
+					log.error("error validateDataTecnica: " + e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -127,7 +131,7 @@ public class CarpetaTecnica {
 	}
 
 	public static void deleteTempFolder(String temp_folder) {
-		System.out.println("Borrando carpeta");
+		log.debug("Borrando carpeta");
 
 		if (!"".equals(temp_folder)) {
 			try {
