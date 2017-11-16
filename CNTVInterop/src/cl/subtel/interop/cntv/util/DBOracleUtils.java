@@ -24,7 +24,7 @@ public class DBOracleUtils {
 			try {
 				Class.forName("oracle.jdbc.driver.OracleDriver");
 
-				db_connection = DriverManager.getConnection(db_url_develop);
+				db_connection = DriverManager.getConnection(db_url_production);
 				db_connection.setAutoCommit(false);
 			} catch (SQLException e) {
 				log.error("Connection Failed! Check output console");

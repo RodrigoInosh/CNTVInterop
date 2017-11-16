@@ -204,6 +204,8 @@ public class Concursos {
 			respuesta.setMensaje("Ya existe esta postulación");
 			e.printStackTrace();
 		}
+		
+		log.info("** FIN CarpetaTecnica **");
 
 		return respuesta;
 	}

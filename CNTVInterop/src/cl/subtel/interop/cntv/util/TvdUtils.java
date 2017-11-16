@@ -316,7 +316,7 @@ public class TvdUtils {
 
 		log.debug("Cod:" + response_code);
 		log.debug("Msg:" + response_message);
-		log.info("** FIN reparosCarpetaTecnica **");
+		log.info("** FIN CarpetaTecnica **");
 
 		return respuesta;
 	}
