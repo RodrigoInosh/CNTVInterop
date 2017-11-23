@@ -369,7 +369,7 @@ public class CarpetaTecnicaFiles {
 
 	public static String uploadFile(File document, String doc_name, Long numero_of_parte) {
 
-		String year = "test";// String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+		String year = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
 		String doc_path = PATH + FILE_SEPARATOR + year + FILE_SEPARATOR + numero_of_parte + FILE_SEPARATOR;
 		String server_path = SERVER_ROOT_PATH + "\\" + year + "\\" + numero_of_parte + "\\";
 		doc_name = year + "_" + numero_of_parte + "_" + doc_name;

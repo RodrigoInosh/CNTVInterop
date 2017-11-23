@@ -124,11 +124,13 @@ public class DBOracleDAO {
 		ResultSet res = null;
 
 		String query = "SELECT " + sequence + " FROM DUAL";
+		System.out.println(query);
 		stmt = db_connection.prepareStatement(query);
 		res = stmt.executeQuery();
 
 		if (res.next()) {
 			sequencue_value = res.getLong("NEXTVAL");
+			System.out.println(sequencue_value);
 		}
 		DBOracleUtils.close(res, stmt);
 
@@ -151,7 +153,7 @@ public class DBOracleDAO {
 			int op_fecha_recep = TvdUtils.getFormattedOPDate();
 			String query_numero_op = "insert into GABINETE.OFICINA_PARTES (op_num_ing, op_fecha_ing, trm_cod, td_codigo, mat_cod, d_codigo, op_obs, op_rut_sol, op_tipo_pers, op_fecha_recep, ts_codigo, remitente, "
 					+ "usuario_creacion, fecha_creacion, process_link_pdf, id_tipo_ing, id_tipo_tramite) VALUES (?, ?, 'PTECNTV', 'CTTVD', 'TVD', 'CON', ?, ?, 'J', ?, 'R2', ?, 3, SYSDATE, 'S', 0, 80)";
-
+			System.out.println(query_numero_op);
 			insert_numero_op_stmt = db_connection.prepareStatement(query_numero_op);
 			insert_numero_op_stmt.setLong(1, numero_op);
 			insert_numero_op_stmt.setInt(2, op_fecha_ing);
@@ -168,16 +170,20 @@ public class DBOracleDAO {
 			boolean is_inserted_ok = false;
 			int intentos = 0;
 			while (!is_inserted_ok) {
+				System.out.println("Intento: "+ intentos);
 				intentos++;
 				try {
 					Long id_evento = getIdEventoIngresoOP();
 					insert_op_eventos = db_connection.prepareStatement(query_evento_op);
+					System.out.println("id_evento:"+id_evento);
+					System.out.println("numero_op:"+numero_op);
 					insert_op_eventos.setLong(1, id_evento);
 					insert_op_eventos.setLong(2, numero_op);
 
 					insert_op_eventos.executeUpdate();
 					is_inserted_ok = true;
 				} catch (SQLException err) {
+					err.printStackTrace();
 					log.error(err.getMessage());
 					DBOracleUtils.closeStatement(insert_op_eventos);
 					if (err.getSQLState().equals("23000")) {
@@ -187,6 +193,7 @@ public class DBOracleDAO {
 						is_inserted_ok = true;
 					}
 				}
+				System.out.println("is_inserted_ok: "+is_inserted_ok);
 			}
 			log.debug("numero intentos:" + intentos);
 		} catch (SQLException e) {
@@ -215,8 +222,10 @@ public class DBOracleDAO {
 
 			if (res.next()) {
 				id_evento_op = res.getLong("id_evento");
+				System.out.println("ID evento: "+id_evento_op);
 			}
-		} catch (SQLException err) {
+		} catch (Exception err) {
+			err.printStackTrace();
 			log.error(err.getMessage());
 		} finally {
 			DBOracleUtils.close(res, stmt);

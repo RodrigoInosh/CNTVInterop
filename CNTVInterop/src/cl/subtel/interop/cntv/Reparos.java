@@ -31,13 +31,13 @@ public class Reparos {
 		JSONObject userData = new JSONObject();
 		Long numSolicitud = 0L;
 		Long numOfiParte = 0L;
-
+		System.out.println("codigoPostulacion: "+codigoPostulacion);
 		try {
 			userData = DBOracleDAO.getUserData(userID);
 			numSolicitud = DBOracleDAO.getSolicitudByPostulationCode(codigoPostulacion);
-			System.out.println(numSolicitud);
+			System.out.println("num soli: "+numSolicitud);
 			numOfiParte = DBOracleDAO.getNumeroOP(userData.getJSONObject("empresa"));
-			System.out.println(numOfiParte);
+			System.out.println("num op: "+numOfiParte);
 
 			if (numSolicitud != 0L && numOfiParte != 0L) {
 				respuesta = TvdUtils.getDataCarpetaTecnica(postulacion, userID, numSolicitud, numOfiParte,
@@ -54,14 +54,9 @@ public class Reparos {
 			e.printStackTrace();
 		}
 		
+		Mail.sendMail("Reparos TVD, Codigo: "+codigoPostulacion, Mail.getBody(numOfiParte, respuesta.getCodigo(), "<b>User Id: </b>"+userID+ "<br><br>"+respuesta.getMensaje()));
 		log.info("** FIN ReparosCarpetaTecnica **");
 		
-		String message_body = "";
-		message_body += "Codigo: " + respuesta.getCodigo() + "\\n";
-		message_body += "Mensaje: " + respuesta.getMensaje();
-		
-		Mail.sendMail("Reparos", message_body);
-
 		return respuesta;
 	}
 }

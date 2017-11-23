@@ -34,21 +34,7 @@ public class TvdUtils {
 			name_sist = "40";
 		else if (type_sist.equals("ZonaUrbana"))
 			name_sist = "66";
-
-		// switch (type_sist) {
-		// case "ZonaServicio":
-		// name_sist = "48";
-		// break;
-		// case "ZonaCobertura":
-		// name_sist = "40";
-		// break;
-		// case "ZonaUrbana":
-		// name_sist = "66";
-		// break;
-		// default:
-		// break;
-		// }
-
+		
 		return name_sist;
 	}
 

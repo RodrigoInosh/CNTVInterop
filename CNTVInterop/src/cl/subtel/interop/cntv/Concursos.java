@@ -31,6 +31,7 @@ import cl.subtel.interop.cntv.dto.RespuestaDTO;
 import cl.subtel.interop.cntv.dto.UsuarioDTO;
 import cl.subtel.interop.cntv.util.DBOracleDAO;
 import cl.subtel.interop.cntv.util.FileProperties;
+import cl.subtel.interop.cntv.util.Mail;
 import cl.subtel.interop.cntv.util.TvdUtils;
 
 @WebService(targetNamespace = "http://cntv.interop.subtel.cl/", portName = "ConcursosPort", serviceName = "ConcursosService")
@@ -204,6 +205,8 @@ public class Concursos {
 			respuesta.setMensaje("Ya existe esta postulación");
 			e.printStackTrace();
 		}
+		
+	    Mail.sendMail("Postulacion TVD, Codigo: "+codigoPostulacion, Mail.getBody(num_ofi_parte, respuesta.getCodigo(), "<b>User Id: </b>"+userID+ "<br><br>"+respuesta.getMensaje()));
 		
 		log.info("** FIN CarpetaTecnica **");
 
