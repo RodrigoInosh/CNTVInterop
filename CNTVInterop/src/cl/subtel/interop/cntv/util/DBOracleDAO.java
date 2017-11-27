@@ -755,8 +755,8 @@ public class DBOracleDAO {
 
 			db_connection = DBOracleUtils.getSingletonInstance();
 			stmt_new_wft_document = null;
-			String query_eft_doc = "INSERT INTO wft_documentos (NUMERO_DOCUMENTO, FECHA_DOCUMENTO, NRO_OFPARTES, STDO_CODIGO, NRO_SOLICITUD, USUARIO_INGRESO, FECHA_INGRESO, PATH) "
-					+ "values (BDC_SUBTEL.SEQ_OFP.NEXTVAL, SYSDATE, ?, ?, ?, 'ADM', SYSDATE, ?)";
+			String query_eft_doc = "INSERT INTO wft_documentos (NUMERO_DOCUMENTO, FECHA_DOCUMENTO, NRO_OFPARTES, FECHA_OFPARTES, STDO_CODIGO, NRO_SOLICITUD, USUARIO_INGRESO, FECHA_INGRESO, PATH) "
+					+ "values (BDC_SUBTEL.SEQ_OFP.NEXTVAL, SYSDATE, ?, SYSDATE, ?, ?, 'ADM', SYSDATE, ?)";
 
 			stmt_new_wft_document = db_connection.prepareStatement(query_eft_doc);
 			stmt_new_wft_document.setLong(1, num_ofi_parte);
