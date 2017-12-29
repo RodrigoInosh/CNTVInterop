@@ -273,66 +273,6 @@ public class CarpetaTecnicaFiles {
 		else if (doc_type.equals(EFICIENCIA_ESPECTRAL))
 			stdo_cod = COD_EFICIENCIA_ESPECTRAL;
 
-			// switch (doc_type) {
-			// case ZONA_SERVICIO_PTX0:
-			// stdo_cod = COD_ZONA_SERVICIO_PTX0;
-			// break;
-			// case ZONA_SERVICIO_PTX1:
-			// stdo_cod = COD_ZONA_SERVICIO_PTX1;
-			// break;
-			// case ZONA_SERVICIO_PTX2:
-			// stdo_cod = COD_ZONA_SERVICIO_PTX2;
-			// break;
-			// case ZONA_COBERTURA_PTX0:
-			// stdo_cod = COD_ZONA_COBERTURA_PTX0;
-			// break;
-			// case ZONA_COBERTURA_PTX1:
-			// stdo_cod = COD_ZONA_COBERTURA_PTX1;
-			// break;
-			// case ZONA_COBERTURA_PTX2:
-			// stdo_cod = COD_ZONA_COBERTURA_PTX2;
-			// break;
-			// case ZONA_URBANA_PTX0:
-			// stdo_cod = COD_ZONA_URBANA_PTX0;
-			// break;
-			// case ZONA_URBANA_PTX1:
-			// stdo_cod = COD_ZONA_URBANA_PTX1;
-			// break;
-			// case ZONA_URBANA_PTX2:
-			// stdo_cod = COD_ZONA_URBANA_PTX2;
-			// break;
-			// case LISTADO_EQUIPOS:
-			// stdo_cod = COD_LISTADO_EQUIPOS;
-			// break;
-			// case MEMORIA_CALCULOS_PERIDAS:
-			// stdo_cod = COD_MEMORIA_CALCULOS_PERIDAS;
-			// break;
-			// case MODELAMIENTO_ANTENA:
-			// stdo_cod = COD_MODELAMIENTO_ANTENA;
-			// break;
-			// case DIAGRAMA_RADIACION_HORIZONTAL:
-			// stdo_cod = COD_DIAGRAMA_RADIACION_HORIZONTAL;
-			// break;
-			// case DIAGRAMA_RADIACION_VERTICAL:
-			// stdo_cod = COD_DIAGRAMA_RADIACION_VERTICAL;
-			// break;
-			// case DESCRIPCION_EQUIPAMIENTO:
-			// stdo_cod = COD_DESCRIPCION_EQUIPAMIENTO;
-			// break;
-			// case CATALOGO_EQUIPOS:
-			// stdo_cod = COD_CATALOGO_EQUIPOS;
-			// break;
-			// case SERVICIOS_INTERACTIVOS:
-			// stdo_cod = COD_SERVICIOS_INTERACTIVOS;
-			// break;
-			// case CERTIFICADO_DGAC:
-			// stdo_cod = COD_CERTIFICADO_DGAC;
-			// break;
-			// case EFICIENCIA_ESPECTRAL:
-			// stdo_cod = COD_EFICIENCIA_ESPECTRAL;
-			// break;
-			// }
-
 			return stdo_cod;
 	}
 

@@ -34,7 +34,7 @@ public class TvdUtils {
 			name_sist = "40";
 		else if (type_sist.equals("ZonaUrbana"))
 			name_sist = "66";
-		
+
 		return name_sist;
 	}
 
@@ -166,21 +166,17 @@ public class TvdUtils {
 		return empresa;
 	}
 
-	public static void validateExisteCliente(JSONObject user_data, String rut_empresa, Logger log) {
-		try {
-			Clientes cliente = TvdUtils.createClienteFromJSON(user_data.getJSONObject("empresa"));
+	public static void validateExisteCliente(JSONObject user_data, String rut_empresa) throws JSONException {
+		Clientes cliente = TvdUtils.createClienteFromJSON(user_data.getJSONObject("empresa"));
 
-			DatosEmpresa empresa = TvdUtils.createDatosEmpresaFromJSON(cliente,
-					user_data.getJSONObject("representanteLegal"));
-			if (!DBOracleDAO.existeCliente(rut_empresa)) {
-				log.debug("Cliente no existe, agregando...");
-				Clientes.insertDataCliente(cliente, empresa, log);
-			} else {
-				log.debug("Cliente existe, actualizando...");
-				Clientes.updateDataCliente(cliente, empresa, log);
-			}
-		} catch (JSONException e) {
-			e.printStackTrace();
+		DatosEmpresa empresa = TvdUtils.createDatosEmpresaFromJSON(cliente,
+				user_data.getJSONObject("representanteLegal"));
+		if (!DBOracleDAO.existeCliente(rut_empresa)) {
+			log.debug("Cliente no existe, agregando...");
+			Clientes.insertDataCliente(cliente, empresa, log);
+		} else {
+			log.debug("Cliente existe, actualizando...");
+			Clientes.updateDataCliente(cliente, empresa, log);
 		}
 	}
 
@@ -198,10 +194,14 @@ public class TvdUtils {
 				String nombre_archivo = files_list[ix].getName();
 				String unextension_file_name = nombre_archivo.split("\\.")[0];
 				String stdo_codigo = CarpetaTecnicaFiles.getSTDOCod(unextension_file_name);
+				// Solo cuando es la zona de servicio de la planta principal se inserta la info
+				// en la matriz tecnologica
 				if (nombre_archivo.contains("ZonaServicio_PTx0") && nombre_archivo.contains("pdf")) {
 					Elemento.insertarDatosSistPrincipal(nombre_archivo, numero_solicitud, postulation_code, userID,
 							stdo_codigo);
 				} else {
+					// Si no, solo se inserta la información del documento que se va a subir al
+					// repositorio.
 					if (!"".equals(stdo_codigo)) {
 						Long cod_documento = DBOracleDAO.createBDCDocumento(numero_solicitud, stdo_codigo);
 						System.out.println("cod:" + cod_documento);
@@ -239,6 +239,7 @@ public class TvdUtils {
 		Connection db_connection = DBOracleUtils.getSingletonInstance();
 
 		try {
+			validateExisteCliente(user_data, user_data.getJSONObject("empresa").getString("rut"));
 			List<DocumentoDTO> lista = postulacion.getArchivos();
 			DocumentoDTO doc = lista.get(0);
 			temp_folder = CarpetaTecnica.saveFile(userID, doc);
